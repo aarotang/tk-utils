@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Story Gift Code Redeemer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏰 Kingdom Story Gift Code Redeemer</h1>
+            <p>Enter a gift code to redeem it across all configured accounts</p>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <form id="giftCodeForm">
+                    <div class="input-group">
+                        <label for="giftCode">Gift Code:</label>
+                        <input type="text" id="giftCode" name="giftCode" placeholder="Enter gift code (e.g., kingdom)" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="servers">Servers (optional):</label>
+                        <select id="servers" name="servers" multiple>
+                            <option value="US">US Server</option>
+                            <option value="TW">TW Server</option>
+                            <option value="KOR">KOR Server</option>
+                            <option value="KOR2">KOR2 Server</option>
+                            <option value="SEA">SEA Server</option>
+                            <option value="JP">JP Server</option>
+                        </select>
+                        <small>Hold Ctrl/Cmd to select multiple. Leave empty for all servers.</small>
+                    </div>
+
+                    <button type="submit" id="submitBtn">
+                        <span id="buttonText">🎁 Redeem Gift Code</span>
+                        <span id="loadingSpinner" class="spinner hidden">⏳</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="status-container">
+                <div id="status" class="status hidden"></div>
+                <div id="results" class="results hidden"></div>
+            </div>
+
+            <div class="info-section">
+                <h3>📋 How it works:</h3>
+                <ol>
+                    <li>Enter your gift code in the input field</li>
+                    <li>Optionally select specific servers (or leave empty for all)</li>
+                    <li>Click "Redeem Gift Code"</li>
+                    <li>The system will automatically redeem the code for all configured accounts</li>
+                    <li>Check the results below and in the GitHub Actions logs</li>
+                </ol>
+            </div>
+
+            <div class="github-link">
+                <a href="https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions" target="_blank">
+                    📊 View Detailed Logs on GitHub
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
