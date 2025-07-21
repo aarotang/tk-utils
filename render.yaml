@@ -3,9 +3,11 @@ services:
     name: tk-utils
     env: python
     buildCommand: |
-      apt-get update && apt-get install -y chromium-browser
+      apt-get update && apt-get install -y chromium chromium-driver && \
       pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
+      - key: GOOGLE_CHROME_BIN
+        value: /usr/bin/chromium

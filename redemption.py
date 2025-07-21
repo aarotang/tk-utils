@@ -9,19 +9,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import shutil
 import logging
 
-options = Options()
-chrome_path = shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
+chrome_path = os.getenv("GOOGLE_CHROME_BIN", "/usr/bin/chromium")
 
-if not chrome_path:
+if not os.path.exists(chrome_path):
     raise Exception("Could not find Chrome binary")
 
 options.binary_location = chrome_path
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
+
+driver = webdriver.Chrome(options=options)
 
 class KingdomStoryCouponRedemption:
     def __init__(self, coupon_code):
