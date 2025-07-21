@@ -12,7 +12,12 @@ import time
 import logging
 
 options = Options()
-options.binary_location = "/usr/bin/chromium"
+chrome_path = shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
+
+if not chrome_path:
+    raise Exception("Could not find Chrome binary")
+
+options.binary_location = chrome_path
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
