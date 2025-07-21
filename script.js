@@ -8,8 +8,8 @@ class GiftCodeRedeemer {
         this.results = document.getElementById('results');
         
         // Replace with your GitHub username and repo name
-        this.GITHUB_USERNAME = 'YOUR_USERNAME';
-        this.GITHUB_REPO = 'YOUR_REPO_NAME';
+        this.GITHUB_USERNAME = 'aarotang';
+        this.GITHUB_REPO = 'tk-utils';
         this.GITHUB_TOKEN = null; // We'll use GitHub's public API
         
         this.initEventListeners();
