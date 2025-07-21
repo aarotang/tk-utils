@@ -12,7 +12,7 @@ import time
 import logging
 
 options = Options()
-options.binary_location = "/usr/bin/chromium-browser"
+options.binary_location = "/usr/bin/google-chrome"
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
