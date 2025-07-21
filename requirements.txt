@@ -2,4 +2,3 @@ flask
 selenium
 webdriver-manager
 gunicorn
-chromium-browser  # this is important
