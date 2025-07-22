@@ -4,7 +4,261 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kingdom Story Gift Code Redeemer</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select {
+            height: 120px;
+        }
+
+        select option {
+            padding: 8px;
+        }
+
+        small {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+        }
+
+        button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #2f855a;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .results {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .results h4 {
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .info-section h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .info-section ol {
+            color: #718096;
+            padding-left: 20px;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .github-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .github-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .github-link a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            button {
+                padding: 15px;
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -55,6 +309,11 @@
                     <li>The system will automatically redeem the code for all configured accounts</li>
                     <li>Check the results below and in the GitHub Actions logs</li>
                 </ol>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e6fffa; border: 1px solid #81e6d9; border-radius: 8px;">
+                    <strong>🚀 Simple & Secure:</strong><br>
+                    No tokens needed! This will open GitHub Actions where you can manually trigger the workflow with your gift code.
+                </div>
             </div>
 
             <div class="github-link">
@@ -65,6 +324,118 @@
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Configuration
+        const REPO_OWNER = 'aarotang';
+        const REPO_NAME = 'tk-utils';
+        
+        // Token will be entered by user at runtime
+        let GITHUB_TOKEN = '';
+
+        document.getElementById('giftCodeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const giftCode = document.getElementById('giftCode').value.trim();
+            const serverSelect = document.getElementById('servers');
+            const selectedServers = Array.from(serverSelect.selectedOptions).map(option => option.value);
+            
+            if (!giftCode) {
+                showStatus('error', '❌ Please enter a gift code');
+                return;
+            }
+            
+            // Instead of API call, redirect to GitHub Actions with pre-filled parameters
+            const serverList = selectedServers.length > 0 ? selectedServers.join(',') : '';
+            const actionsUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/actions/workflows/redeem-coupon.yml`;
+            
+            showStatus('success', `✅ Redirecting to GitHub Actions to run workflow with gift code "${giftCode}"...`);
+            showResults(giftCode, selectedServers);
+            
+            // Show instructions for manual trigger
+            showManualInstructions(giftCode, serverList);
+            
+            // Open GitHub Actions page
+            setTimeout(() => {
+                window.open(actionsUrl, '_blank');
+            }, 2000);
+        });
+
+        function showManualInstructions(giftCode, servers) {
+            const instructionsDiv = document.createElement('div');
+            instructionsDiv.className = 'status info';
+            instructionsDiv.style.marginTop = '20px';
+            instructionsDiv.innerHTML = `
+                <strong>📋 Manual Steps:</strong><br>
+                1. Click "Run workflow" on the GitHub Actions page<br>
+                2. Enter gift code: <strong>${giftCode}</strong><br>
+                3. Enter servers: <strong>${servers || 'leave empty for all'}</strong><br>
+                4. Click "Run workflow" to start redemption
+            `;
+            
+            document.querySelector('.status-container').appendChild(instructionsDiv);
+        }
+
+        async function triggerWorkflow(giftCode, servers) {
+            // This function is no longer used but kept for compatibility
+            // The new approach uses manual workflow triggering
+        }
+
+        function setLoading(loading) {
+            const submitBtn = document.getElementById('submitBtn');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            submitBtn.disabled = loading;
+            
+            if (loading) {
+                buttonText.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                buttonText.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+        }
+
+        function showResults(giftCode, servers) {
+            const resultsDiv = document.getElementById('results');
+            const serverList = servers.length > 0 ? servers.join(', ') : 'All servers';
+            
+            resultsDiv.innerHTML = `
+                <h4>🎯 Redemption Details:</h4>
+                <div class="result-item">
+                    <strong>Gift Code:</strong> ${giftCode}
+                </div>
+                <div class="result-item">
+                    <strong>Target Servers:</strong> ${serverList}
+                </div>
+                <div class="result-item">
+                    <strong>Status:</strong> Workflow initiated - check GitHub Actions for detailed results
+                </div>
+                <div class="result-item">
+                    <strong>Next Steps:</strong> The workflow will run your Python script to redeem the code across all configured accounts
+                </div>
+            `;
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Add some visual feedback for form interactions
+        document.getElementById('giftCode').addEventListener('input', function(e) {
+            if (e.target.value.length > 0) {
+                e.target.style.borderColor = '#48bb78';
+            } else {
+                e.target.style.borderColor = '#e2e8f0';
+            }
+        });
+        
+        // Auto-focus the gift code input
+        document.getElementById('giftCode').focus();
+    </script>
 </body>
 </html>
