@@ -1,5 +1,5 @@
 # 新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)
-**Date:** January 6, 2025  
+**Date:** Auguest 5, 2025  
 **Type:** New Character Release  
 **Event:** Darkness Warrior
 
