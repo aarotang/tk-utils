@@ -12,7 +12,7 @@ Welcome to the Kingdom Story announcements archive! This directory contains all 
 ## 🆕 Latest Updates
 
 ### Auguest 2025
-- **[Aug 5, 2025]** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](2025-01-cheok-jun-gyeong/) - New Darkness Warrior character release
+- **[Aug 5, 2025]** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](2025-08-cheok-jun-gyeong/) - New Darkness Warrior character release
 
 
 ## 📁 All Announcements
@@ -52,3 +52,4 @@ Welcome to the Kingdom Story announcements archive! This directory contains all 
 
 *Last Updated: Auguest 6, 2025*  
 *Total Announcements: 1*
+
