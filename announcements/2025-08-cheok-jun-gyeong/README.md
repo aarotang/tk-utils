@@ -1,4 +1,4 @@
-![Cheok Jun-gyeong](images/528334883_1278077837662057_8056094483533173920_n.jpg)
+![Cheok Jun-gyeong](images/00.jpg)
 # 新武將介紹 - 拓跋京 (Cheok Jun-gyeong)
 **Date:** Auguest 5, 2025  
 **Type:** New Character Release  
