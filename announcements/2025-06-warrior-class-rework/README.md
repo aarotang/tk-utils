@@ -87,7 +87,7 @@
 ## Extracted Text
 
 ```
-: oti  NA 7 和 & RS  !  4 | A  SSR atl av os Os 4 y om ( . 4 F * Gs age 0 eel  wo 5 ER g _ ss. RAGEAM, ART ! RAR  FRGREA, RAHA, FARLAMRLARSARRR. SREB? PAARALAS RMP ARAAOR, SREERT TAMBOR. (arvdy ARBRASME : BADETT SREP HR, MEATS SE MERA eS | RELRBALHSERSLHIAR, ARLE, HREAMNTKEMESROR SRR A, A BRARE MERE, HAMERSS 6 月的第二次更新内容吧 ! GY > Rae CEERI) me ee ArT oT > Zs& Zt a Kom SN 技能1 CORO, AF!) (28a) BPRAPERBSE. 0.020.1 tt, 0.630RH. BY ASLOaoRS 16 8A L6 BERS EER BND 33% 16SRARRARA 33% RBSLRIZSREH AH RMP FL....
+a Fr 了 4  4 wa 出 ia: 4 4  | | a)  上    Skee Se 2 s Wey Pe | wa ao we 和 j wv NS ees, MEWNEAN, ARF! RERK  FRR, SARK, FABEANSLEABRRRR, SREB? 糖是想成为主公身进那阵清爽微电的蔡正过次也带来了邻人期待的好消息洁 (ao>vj9 本次更新内容如下 : 我们进行了第一波猛将的平衡改版帮助主公们可以享受到更加策略性与紧张刺激的战门末验 ! 配合上一次更新推出的暴手与暴近过溃系统本次狩将的改版将这主公们可以省试更多样的组合与战术玩法带来 全新的乐趣 ! 那廉现在就纺我们一起来看看 6 月的第二次更新内容吧 ! 生 > 超越者项羽 (BAP RBS) j ri x Kage OF eee ee ay 要 一人人 a 技能1 GOES, AF!) (238) HPBABSRBSS. 0.020.16t, 0.63PR A. RF BS168HRS 168HBR 1.68H XBR EMM 33% 168PARBAIEA 33% BRLATRALEHRH KMBH1, ...
 ```
 
 ## Notes
@@ -98,4 +98,4 @@
 
 ---
 
-*Last updated: 2025-08-11 14:12:26*
+*Last updated: 2025-08-11 14:22:02*
