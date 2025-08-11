@@ -34,7 +34,7 @@ jobs:
       
     - name: Commit updated announcements
       run: |
-        git config --local user.email "action@github.com"
+        git config --local user.email "194980684+aarotang@users.noreply.github.com"
         git config --local user.name "GitHub Action"
         git add announcements/
         if git diff --staged --quiet; then
