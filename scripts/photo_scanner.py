@@ -16,44 +16,10 @@ class KingdomStoryPhotoScanner:
         self.event_keywords = ['活動', 'Event', '事件']
         self.maintenance_keywords = ['維護', 'Maintenance', '更新', 'Update']
         
-    def preprocess_image(self, image_path):
-        """Preprocess image for better OCR results"""
-        try:
-            import cv2
-            import numpy as np
-            
-            # Read image
-            image = cv2.imread(str(image_path))
-            
-            # Convert to grayscale
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
-            # Apply gaussian blur to reduce noise
-            blurred = cv2.GaussianBlur(gray, (1, 1), 0)
-            
-            # Apply threshold to get better contrast
-            _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            
-            # Scale image up for better OCR (if image is small)
-            height, width = thresh.shape
-            if height < 500 or width < 500:
-                scale_factor = 2
-                thresh = cv2.resize(thresh, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
-            
-            # Convert back to PIL Image
-            processed_image = Image.fromarray(thresh)
-            return processed_image
-            
-        except Exception as e:
-            print(f"Error preprocessing {image_path}: {e}")
-            # Fallback to original image
-            return Image.open(image_path)
-        """Extract text from image using OCR"""
     def extract_text_from_image(self, image_path):
         """Extract text from image using OCR"""
         try:
-            # Preprocess image for better OCR
-            processed_image = self.preprocess_image(image_path)
+            image = Image.open(image_path)
             
             # Try multiple OCR configurations for better Chinese text extraction
             configs = [
@@ -69,7 +35,7 @@ class KingdomStoryPhotoScanner:
             # Try each configuration and keep the longest result
             for config in configs:
                 try:
-                    text = pytesseract.image_to_string(processed_image, config=config)
+                    text = pytesseract.image_to_string(image, config=config)
                     if len(text) > max_length:
                         max_length = len(text)
                         best_text = text
