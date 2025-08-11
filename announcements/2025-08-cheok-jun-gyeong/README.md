@@ -1,29 +1,95 @@
-![Cheok Jun-gyeong](images/00.jpg)
-# 新武將介紹 - 拓跋京 (Cheok Jun-gyeong)
-**Date:** Auguest 5, 2025  
-**Type:** New Character Release  
-**Event:** Darkness Warrior
+# New Character - 攻略戰倍速戰鬥系統
+
+**Date:** 2025-08-11  
+**Type:** New Character  
+**Status:** Active  
 
 ## Announcement Images
-![Main Announcement](images/01.jpg)
-![Character Introduction 2](images/02.jpg)
-![Character Introduction 3](images/03.jpg)
-![Character Introduction 4](images/04.jpg)
-![Character Introduction 5](images/05.jpg)
-![Character Introduction 6](images/06.jpg)
-![Character Introduction 7](images/07.jpg)
-![Character Introduction 8](images/08.jpg)
-![Character Introduction 9](images/09.jpg)
-![Character Introduction 10](images/10.jpg)
-![Character Introduction 11](images/11.jpg)
-![Character Introduction 12](images/12.jpg)
-![Character Introduction 13](images/13.jpg)
-![Character Introduction 14](images/14.jpg)
 
-## Summary
-- New character: 拓跋京 (Cheok Jun-gyeong)
-- Event type: Darkness Warrior
-- 技能1【迅猛突斬】 ：對全體敵軍造成闇傷害。 每名目標 5～10 秒嗜睡，受到 10 次攻擊後解除，傷害量的 100% 吸血。
-- 技能2【無瑕一斬】 ：嗜睡狀態的對象發動。 對全體敵人造成相當於其最大生命值 12.5%～25% 的比例傷害。
-- 技能3【忠義之牆】 ：當體力低於 50% 時發動。（發動一次） 自身 3.6 秒內元氣恢復 100% 0.6～3 秒不屈 0.6～3 秒動亂 動亂對象：對全體敵軍。
-- 技能4【先鋒之誓】 ：戰鬥開始時發動一次。 對最多 4 名敵軍造成閃屬性傷害。 每名目標 2～10 秒暈眩，受到 10 次攻擊後解除， 1.2～6 秒內降低元素抵抗 30%（最多疊加 2 層）。
+### Image 1
+![New Character Image 1](images/00.jpg)
+
+### Image 2
+![New Character Image 2](images/01.jpg)
+
+### Image 3
+![New Character Image 3](images/02.jpg)
+
+### Image 4
+![New Character Image 4](images/03.jpg)
+
+### Image 5
+![New Character Image 5](images/04.jpg)
+
+### Image 6
+![New Character Image 6](images/05.jpg)
+
+### Image 7
+![New Character Image 7](images/06.jpg)
+
+### Image 8
+![New Character Image 8](images/07.jpg)
+
+### Image 9
+![New Character Image 9](images/08.jpg)
+
+### Image 10
+![New Character Image 10](images/09.jpg)
+
+### Image 11
+![New Character Image 11](images/10.jpg)
+
+### Image 12
+![New Character Image 12](images/11.jpg)
+
+### Image 13
+![New Character Image 13](images/12.jpg)
+
+### Image 14
+![New Character Image 14](images/13.jpg)
+
+### Image 15
+![New Character Image 15](images/14.jpg)
+
+### Image 16
+![New Character Image 16](images/528334883_1278077837662057_8056094483533173920_n.jpg)
+
+### Image 17
+![New Character Image 17](images/528481904_1203360848474084_5723608305655416187_n.jpg)
+
+## Extracted Text
+
+```
+一 .                  . \       -
+人 > 3   NM
+‧                        - (A 说    TI
+要       wy
+a  si
+key一人一和 Sr 人
+3                        ‘
+Bt. Sart
+ree)                       |
+(                                           |
+SSR 下:
+Ss        “到        a =         if
+Wes 天
+a       -  ey                =<
+和了      會   PO py A
+;    al  Z   是一
+親愛的主公們好 ! RERKO
+八月的熱氣越來越高汪了呢上
+今天我也帶著好消息來與一直支持《三國萌萌打》的主公們見面啦 ¥ (orr<Ig
+這次的更新, 我們準備了將加入三國萌萌打的新武將!
+不僅如此, 大家期待已久的「攻略戰倍速戰鬥系統」也終於要登場了
+繼第一位活動武將 「貞德」之後, 第二位活動武將 「拓俊京」也即將...
+```
+
+## Notes
+
+- Images automatically detected and processed
+- Text extracted using OCR technology
+- For detailed information, please refer to the original announcement images
+
+---
+
+*Last updated: 2025-08-11 13:48:26*
