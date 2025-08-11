@@ -19,12 +19,39 @@ class KingdomStoryPhotoScanner:
     def extract_text_from_image(self, image_path):
         """Extract text from image using OCR"""
         try:
-            # Configure tesseract for Chinese + English
-            config = '--oem 3 --psm 6 -l chi_tra+chi_sim+eng'
-            
             image = Image.open(image_path)
-            text = pytesseract.image_to_string(image, config=config)
-            return text.strip()
+            
+            # Try multiple OCR configurations for better Chinese text extraction
+            configs = [
+                '--oem 3 --psm 3 -l chi_tra+eng',  # Traditional Chinese + English, auto page segmentation
+                '--oem 3 --psm 6 -l chi_sim+eng',  # Simplified Chinese + English, single text block
+                '--oem 3 --psm 4 -l chi_tra+chi_sim+eng',  # Both Chinese + English, single column
+                '--oem 1 --psm 3 -l chi_tra+eng',  # Legacy engine for traditional Chinese
+            ]
+            
+            best_text = ""
+            max_length = 0
+            
+            # Try each configuration and keep the longest result
+            for config in configs:
+                try:
+                    text = pytesseract.image_to_string(image, config=config)
+                    if len(text) > max_length:
+                        max_length = len(text)
+                        best_text = text
+                except:
+                    continue
+            
+            # Clean up the text
+            if best_text:
+                # Remove excessive whitespace and weird characters
+                import re
+                best_text = re.sub(r'\s+', ' ', best_text)  # Multiple spaces to single
+                best_text = re.sub(r'[^\w\s\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff!@#$%^&*(),.?":{}|<>]', '', best_text)  # Keep Chinese, Japanese, alphanumeric, common punctuation
+                best_text = best_text.strip()
+            
+            return best_text
+            
         except Exception as e:
             print(f"Error extracting text from {image_path}: {e}")
             return ""
