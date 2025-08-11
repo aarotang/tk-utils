@@ -87,26 +87,7 @@
 ## Extracted Text
 
 ```
-a Fr 了       4
--                              4   下
-出            ia:
-4      4      \          | |
-a)             ;
-上     ¢           ‘        /
-Skee 一
-Se 2          一
-Wey         Pe           |
-wa      ao we 不
-j     wv       NS ees,
-親愛的主公們, 大家好 ! RERK ©
-天氣越來越熱, SARK, 不知道主公們最近是否都鍵健康康、毫無不負呢?
-紛是想成為主公身邊那陣清爽微風的蔡玟, 這次也帶來了令人期待的好消息 竺(>vd9
-本次更新內容如下:
-我們進行了第一波猛將的平衡改版, 圖助主公們可以享受到更加策略性與緊張刺激的戰鬥體驗 !
-配合上一次更新推出的暴擊與暴學迴避系統, 本次猛將的改版, 將讓主公們可以演試更多樣的組合與戰術玩法, 帶來
-全新的樂趣 !
-那麼現在, 就讓我們一起來看看6月的第二次更新內容吧! 各 [> 超越者项羽 (想漢爭霸章猛將)
-...
+: oti  NA 7 和 & RS  !  4 | A  SSR atl av os Os 4 y om ( . 4 F * Gs age 0 eel  wo 5 ER g _ ss. RAGEAM, ART ! RAR  FRGREA, RAHA, FARLAMRLARSARRR. SREB? PAARALAS RMP ARAAOR, SREERT TAMBOR. (arvdy ARBRASME : BADETT SREP HR, MEATS SE MERA eS | RELRBALHSERSLHIAR, ARLE, HREAMNTKEMESROR SRR A, A BRARE MERE, HAMERSS 6 月的第二次更新内容吧 ! GY > Rae CEERI) me ee ArT oT > Zs& Zt a Kom SN 技能1 CORO, AF!) (28a) BPRAPERBSE. 0.020.1 tt, 0.630RH. BY ASLOaoRS 16 8A L6 BERS EER BND 33% 16SRARRARA 33% RBSLRIZSREH AH RMP FL....
 ```
 
 ## Notes
@@ -117,4 +98,4 @@ j     wv       NS ees,
 
 ---
 
-*Last updated: 2025-08-11 13:57:51*
+*Last updated: 2025-08-11 14:12:26*
