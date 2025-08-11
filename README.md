@@ -19,7 +19,7 @@ A collection of automation tools and utilities for Kingdom Story game, including
 ## 🎮 Latest Kingdom Story Updates
 
 ### Recent Announcements
-- **Aug 8, 2025** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](announcements/2025-08-cheok-jun-gyeong/) - Darkness Warrior character release
+- **Aug 5, 2025** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](announcements/2025-08-cheok-jun-gyeong/) - Darkness Warrior character release
 
 📋 [View All Game Announcements](announcements/) | 🔔 [Setup Update Notifications](.github/workflows/)
 
