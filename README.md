@@ -6,7 +6,7 @@ A collection of automation tools and utilities for Kingdom Story game, including
 
 ### 🎫 Coupon Redemption
 - **Automated coupon redemption** across multiple servers
-- **Multi-account support** for different regions (US, TW, KOR, SEA, JP)
+- **Multi-account support** for different servers (US, TW, KOR, SEA, JP)
 - **GitHub Actions integration** for scheduled runs
 - **Headless browser automation** using Selenium
 
@@ -19,7 +19,7 @@ A collection of automation tools and utilities for Kingdom Story game, including
 ## 🎮 Latest Kingdom Story Updates
 
 ### Recent Announcements
-- **Jan 6, 2025** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](announcements/2025-08-cheok-jun-gyeong/) - Darkness Warrior character release
+- **Aug 8, 2025** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](announcements/2025-08-cheok-jun-gyeong/) - Darkness Warrior character release
 
 📋 [View All Game Announcements](announcements/) | 🔔 [Setup Update Notifications](.github/workflows/)
 
