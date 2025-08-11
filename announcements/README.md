@@ -11,19 +11,24 @@ Welcome to the Kingdom Story announcements archive! This directory contains all 
 ## 🆕 Latest Updates
 
 - **[2025-08-11]** - [New Character - 攻略戰倍速戰鬥系統](2025-08-cheok-jun-gyeong/) - New Character
+- **[2025-08-11]** - [Maintenance](2025-06-warrior-class-rework/) - Maintenance
 
 ## 📁 All Announcements
 
 | Date | Type | Title | Link |
 |------|------|-------|------|
 | 2025-08-11 | New Character | 攻略戰倍速戰鬥系統 | [View →](2025-08-cheok-jun-gyeong/) |
+| 2025-08-11 | Maintenance | Maintenance | [View →](2025-06-warrior-class-rework/) |
 
 ## 🏷️ Categories
 
 ### 🎭 New Character
 - [攻略戰倍速戰鬥系統](2025-08-cheok-jun-gyeong/) - 2025-08-11
 
+### 🔧 Maintenance
+- [Maintenance](2025-06-warrior-class-rework/) - 2025-08-11
+
 ---
 
-*Last Updated: 2025-08-11 13:48:26*  
-*Total Announcements: 1*
+*Last Updated: 2025-08-11 13:58:12*  
+*Total Announcements: 2*
