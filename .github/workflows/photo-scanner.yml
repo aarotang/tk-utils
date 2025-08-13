@@ -29,19 +29,60 @@ jobs:
         sudo apt-get update
         sudo apt-get install tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-chi-sim
         
-    - name: Scan new photos and update announcements
+    - name: Scan new photos and generate content
       run: python scripts/photo_scanner.py
       
-    - name: Commit updated announcements
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Check if new content was generated
+      id: check_changes
       run: |
-        git config --local user.email "194980684+aarotang@users.noreply.github.com"
-        git config --local user.name "aarotang"
-        git add announcements/
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
+        if [ -f "new-entries.md" ] || [ -n "$(git diff --name-only announcements/*/README.md 2>/dev/null | head -1)" ]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "✅ New announcement content detected"
         else
-          git commit -m "📸 Auto-update: Generated announcements from new photos"
-          git push
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ No new announcements to process"
         fi
+        
+    - name: Create Pull Request
+      if: steps.check_changes.outputs.has_changes == 'true'
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: '📸 Auto-generated: New Kingdom Story announcements'
+        title: '📸 New Kingdom Story Announcements Ready for Review'
+        body: |
+          ## 🎮 New Kingdom Story Announcements Detected
+          
+          This PR contains auto-generated content from newly uploaded announcement images.
+          
+          ### 📋 What's Included:
+          - Individual README.md files for new announcement folders
+          - `new-entries.md` with proposed additions for main README
+          - OCR-extracted text from images
+          
+          ### ✅ Review Checklist:
+          - [ ] Check generated README files in announcement folders
+          - [ ] Review OCR-extracted text for accuracy
+          - [ ] Edit content if needed
+          - [ ] Copy desired entries from `new-entries.md` to `announcements/README.md`
+          - [ ] Delete `new-entries.md` after integration
+          
+          ### 🔧 Next Steps:
+          1. Review and edit the generated files
+          2. Manually integrate entries from `new-entries.md` into main README
+          3. Merge this PR when satisfied
+          
+          ---
+          
+          *This PR was automatically created by the photo scanner workflow.*
+        branch: announcements-update-${{ github.run_number }}
+        delete-branch: true
+        labels: |
+          📸 announcements
+          🔍 needs-review
+          
+    - name: Output PR status
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        echo "🎉 Pull Request created with new announcement content!"
+        echo "📋 Please review the generated files and merge when ready."
