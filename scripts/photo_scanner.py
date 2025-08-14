@@ -1,471 +1,457 @@
 #!/usr/bin/env python3
-# scripts/photo_scanner.py
+"""
+Enhanced Kingdom Story Photo Scanner
+Processes announcement images and generates well-formatted README files
+"""
 
 import os
 import re
+import cv2
+import glob
 import json
-from pathlib import Path
 from datetime import datetime
-from PIL import Image
+from pathlib import Path
+from PIL import Image, ImageEnhance, ImageFilter
 import pytesseract
 
 class KingdomStoryPhotoScanner:
     def __init__(self):
-        self.announcements_path = Path('announcements')
-        self.processing_log_path = Path('announcements/.processing-log.json')
+        self.announcement_dirs = []
+        self.new_entries = []
+        self.processed_folders = set()
         
-        # Keywords for categorization
-        self.character_keywords = ['新武將', 'New Officer', '新角色', 'New Character', '武將介紹']
-        self.event_keywords = ['活動', 'Event', '事件', '慶典', 'Festival']
-        self.maintenance_keywords = ['維護', 'Maintenance', '更新', 'Update']
-        self.balance_keywords = ['平衡', 'Balance', '改版', 'Rework', '調整', 'Adjustment']
+        # OCR configuration for better Chinese text recognition
+        self.ocr_config = r'--oem 3 --psm 6 -l chi_tra+chi_sim+eng'
         
-    def load_processing_log(self):
-        """Load log of previously processed folders"""
-        if self.processing_log_path.exists():
-            try:
-                with open(self.processing_log_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except:
-                return {'processed_folders': []}
-        return {'processed_folders': []}
-    
-    def save_processing_log(self, log_data):
-        """Save processing log"""
-        with open(self.processing_log_path, 'w', encoding='utf-8') as f:
-            json.dump(log_data, f, indent=2, ensure_ascii=False)
+        # Common OCR error patterns and corrections
+        self.text_corrections = {
+            # Common OCR misreads for Chinese characters
+            '技能1': ['技能1', '技能 1', '技能I', '技能l'],
+            '技能2': ['技能2', '技能 2', '技能II', '技能ll'],
+            '技能3': ['技能3', '技能 3', '技能III', '技能lll'],
+            '技能4': ['技能4', '技能 4', '技能IV', '技能lV'],
+            '傷害': ['傷害', '伤害', '傷寮', '伤寮'],
+            '攻擊': ['攻擊', '攻击', '攻撃'],
+            '對象': ['對象', '对象', '對像'],
+            '秒': ['秒', '妙', 'ネ少'],
+            '造成': ['造成', '道成'],
+            '發動': ['發動', '发动', '發勤'],
+            '獲得': ['獲得', '获得', '獲徳'],
+            '增加': ['增加', '堌加'],
+            '減少': ['減少', '减少'],
+            '% ': ['%', '％', '% ', ' %'],
+        }
 
-    def find_new_announcement_folders(self):
-        """Find folders that need processing (no README.md)"""
-        if not self.announcements_path.exists():
+    def find_announcement_folders(self):
+        """Find all announcement folders with images"""
+        announcements_path = Path("announcements")
+        if not announcements_path.exists():
+            print("No announcements directory found")
             return []
-            
-        new_folders = []
-        processing_log = self.load_processing_log()
-        processed = set(processing_log.get('processed_folders', []))
         
-        for folder in self.announcements_path.iterdir():
-            if (folder.is_dir() and 
-                not folder.name.startswith('.') and 
-                folder.name not in processed and
-                folder.name != 'archive'):
-                
-                readme_path = folder / 'README.md'
-                images_dir = folder / 'images'
-                
-                # Only process if no README exists but images directory does
-                if not readme_path.exists() and images_dir.exists():
-                    image_files = list(images_dir.glob('*.jpg')) + list(images_dir.glob('*.png')) + list(images_dir.glob('*.jpeg'))
+        folders = []
+        for folder in announcements_path.iterdir():
+            if folder.is_dir() and not folder.name.startswith('.'):
+                images_path = folder / "images"
+                if images_path.exists():
+                    image_files = list(images_path.glob("*.jpg")) + \
+                                 list(images_path.glob("*.png")) + \
+                                 list(images_path.glob("*.jpeg"))
                     if image_files:
-                        new_folders.append(folder)
+                        folders.append(folder)
         
-        return new_folders
+        return sorted(folders)
 
     def preprocess_image(self, image_path):
-        """Preprocess image for better OCR results"""
+        """Enhanced image preprocessing for better OCR results"""
         try:
-            import cv2
-            import numpy as np
+            # Load with PIL for better handling
+            pil_image = Image.open(image_path)
             
-            # Read image
-            image = cv2.imread(str(image_path))
+            # Convert to RGB if needed
+            if pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
+            
+            # Enhance contrast and sharpness
+            enhancer = ImageEnhance.Contrast(pil_image)
+            pil_image = enhancer.enhance(1.2)
+            
+            enhancer = ImageEnhance.Sharpness(pil_image)
+            pil_image = enhancer.enhance(1.1)
+            
+            # Convert to OpenCV format
+            import numpy as np
+            cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
             
             # Convert to grayscale
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
             
-            # Apply gaussian blur to reduce noise
-            blurred = cv2.GaussianBlur(gray, (1, 1), 0)
+            # Apply adaptive thresholding for better text recognition
+            processed = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            )
             
-            # Apply threshold to get better contrast
-            _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            # Noise reduction
+            processed = cv2.medianBlur(processed, 3)
             
-            # Scale image up for better OCR (if image is small)
-            height, width = thresh.shape
-            if height < 500 or width < 500:
-                scale_factor = 2
-                thresh = cv2.resize(thresh, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
-            
-            # Convert back to PIL Image
-            processed_image = Image.fromarray(thresh)
-            return processed_image
+            return processed
             
         except Exception as e:
             print(f"Error preprocessing {image_path}: {e}")
             # Fallback to original image
-            return Image.open(image_path)
+            return cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
 
     def extract_text_from_image(self, image_path):
-        """Extract text from image using OCR"""
+        """Extract text with improved preprocessing and error correction"""
         try:
-            # Check for manual text override first
-            text_file = image_path.parent.parent / 'text.txt'
-            if text_file.exists():
-                with open(text_file, 'r', encoding='utf-8') as f:
-                    return f.read().strip()
-            
-            # Preprocess image for better OCR
             processed_image = self.preprocess_image(image_path)
             
-            # Try multiple OCR configurations for better Chinese text extraction
-            configs = [
-                '--oem 3 --psm 3 -l chi_tra+eng',  # Traditional Chinese + English, auto page segmentation
-                '--oem 3 --psm 6 -l chi_sim+eng',  # Simplified Chinese + English, single text block
-                '--oem 3 --psm 4 -l chi_tra+chi_sim+eng',  # Both Chinese + English, single column
-                '--oem 1 --psm 3 -l chi_tra+eng',  # Legacy engine for traditional Chinese
-            ]
+            if processed_image is None:
+                return ""
             
-            best_text = ""
-            max_length = 0
+            # Extract text with multiple attempts
+            text = pytesseract.image_to_string(processed_image, config=self.ocr_config)
             
-            # Try each configuration and keep the longest result
-            for config in configs:
-                try:
-                    text = pytesseract.image_to_string(processed_image, config=config)
-                    if len(text) > max_length:
-                        max_length = len(text)
-                        best_text = text
-                except:
-                    continue
+            # Clean and correct text
+            cleaned_text = self.clean_ocr_text(text)
             
-            # Clean up the text
-            if best_text:
-                # Remove excessive whitespace and weird characters
-                best_text = re.sub(r'\s+', ' ', best_text)  # Multiple spaces to single
-                best_text = re.sub(r'[^\w\s\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff!@#$%^&*(),.?":{}|<>]', '', best_text)  # Keep Chinese, Japanese, alphanumeric, common punctuation
-                best_text = best_text.strip()
-            
-            return best_text
+            return cleaned_text
             
         except Exception as e:
             print(f"Error extracting text from {image_path}: {e}")
             return ""
 
-    def analyze_announcement_type(self, text, folder_name):
-        """Determine announcement type from extracted text and folder name"""
-        combined_text = (text + ' ' + folder_name).lower()
+    def clean_ocr_text(self, text):
+        """Clean and correct common OCR errors"""
+        if not text.strip():
+            return ""
         
-        if any(keyword in text for keyword in self.character_keywords):
-            return "New Character"
-        elif any(keyword in combined_text for keyword in self.balance_keywords):
+        # Basic cleaning
+        cleaned = text.strip()
+        
+        # Remove excessive whitespace
+        cleaned = re.sub(r'\s+', ' ', cleaned)
+        
+        # Fix common OCR errors
+        for correct, variations in self.text_corrections.items():
+            for variation in variations:
+                cleaned = cleaned.replace(variation, correct)
+        
+        # Remove very short lines that are likely noise
+        lines = cleaned.split('\n')
+        filtered_lines = [line.strip() for line in lines if len(line.strip()) > 2]
+        
+        return '\n'.join(filtered_lines[:20])  # Limit to first 20 meaningful lines
+
+    def determine_announcement_type(self, folder_name, extracted_text):
+        """Determine the type of announcement based on folder name and content"""
+        folder_lower = folder_name.lower()
+        text_lower = extracted_text.lower() if extracted_text else ""
+        
+        # Character releases
+        if any(keyword in folder_lower for keyword in ['character', 'hero', '新武將', '武將']):
+            return "New Character Release"
+        elif any(keyword in text_lower for keyword in ['新武將', '武將介紹', 'new character']):
+            return "New Character Release"
+        
+        # Balance updates
+        if any(keyword in folder_lower for keyword in ['balance', 'update', '更新', '平衡']):
             return "Balance Update"
-        elif any(keyword in text for keyword in self.event_keywords):
-            return "Event"
-        elif any(keyword in text for keyword in self.maintenance_keywords):
-            return "Maintenance"
+        elif any(keyword in text_lower for keyword in ['平衡更新', 'balance update', '技能修改']):
+            return "Balance Update"
+        
+        # Events
+        if any(keyword in folder_lower for keyword in ['event', '活動', '事件']):
+            return "Event Announcement"
+        elif any(keyword in text_lower for keyword in ['活動', 'event', '限時']):
+            return "Event Announcement"
+        
+        # Default
+        return "General Announcement"
+
+    def extract_date_from_folder(self, folder_name):
+        """Extract date from folder name"""
+        # Try to find date pattern like 2025-08-13
+        date_match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})', folder_name)
+        if date_match:
+            year, month, day = date_match.groups()
+            return f"{month.zfill(2)}/{day.zfill(2)}/{year}"
+        
+        # Try to find year-month pattern like 2025-08
+        date_match = re.search(r'(\d{4})-(\d{1,2})', folder_name)
+        if date_match:
+            year, month = date_match.groups()
+            return f"{month.zfill(2)}/{year}"
+        
+        # Default to current date
+        return datetime.now().strftime("%m/%d/%Y")
+
+    def generate_title_from_folder(self, folder_name, announcement_type, extracted_text):
+        """Generate a proper title from folder name and content"""
+        # Remove date prefix from folder name
+        clean_name = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name)
+        clean_name = re.sub(r'^\d{4}-\d{1,2}-?', '', clean_name)
+        
+        # Replace hyphens with spaces and title case
+        title_base = clean_name.replace('-', ' ').replace('_', ' ').title()
+        
+        # Try to extract character name from text for character releases
+        if announcement_type == "New Character Release":
+            # Look for character name patterns in Chinese
+            char_match = re.search(r'新武將[：:]\s*([^\s\n]+)', extracted_text)
+            if char_match:
+                char_name = char_match.group(1)
+                return f"新武將介紹 - {char_name} (New Character - {title_base})"
+            else:
+                return f"新武將介紹 - {title_base} (New Character Release)"
+        
+        elif announcement_type == "Balance Update":
+            # Look for version number
+            version_match = re.search(r'(\d+[a-z]?)', title_base)
+            if version_match:
+                version = version_match.group(1)
+                return f"Balance Update - {version} (平衡更新 - {version})"
+            else:
+                return f"Balance Update - {title_base} (平衡更新)"
+        
         else:
-            return "General Update"
+            return title_base
 
-    def extract_character_name(self, text):
-        """Try to extract character name from text"""
-        # Look for names in quotes or brackets
-        patterns = [
-            r'[「『]([^」』]+)[」』]',  # Japanese/Chinese quotes
-            r'"([^"]+)"',              # English quotes
-            r'【([^】]+)】',            # Chinese brackets
-            r'[（(]([^)）]+)[)）]',      # Parentheses
-        ]
+    def extract_skills_from_text(self, text):
+        """Extract skill information from OCR text"""
+        if not text:
+            return []
         
-        for pattern in patterns:
-            matches = re.findall(pattern, text)
-            for match in matches:
-                name = match.strip()
-                # Filter out common non-name matches
-                if (len(name) > 1 and len(name) < 20 and 
-                    not name.isdigit() and 
-                    not any(word in name.lower() for word in ['event', 'update', 'maintenance', '活動', '更新', '維護'])):
-                    return name
+        skills = []
+        lines = text.split('\n')
+        current_skill = None
+        current_description = []
         
-        return None
-
-    def scan_announcement_folder(self, folder_path):
-        """Scan a single announcement folder for images and generate content"""
-        images_dir = folder_path / 'images'
-        if not images_dir.exists():
-            return None
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
             
-        # Find all image files
-        image_files = []
-        supported_formats = {'.jpg', '.jpeg', '.png', '.gif'}
+            # Check if this is a skill header
+            skill_match = re.search(r'技能([1-4])[：:【]?([^】\n]*)', line)
+            if skill_match:
+                # Save previous skill if exists
+                if current_skill and current_description:
+                    skills.append({
+                        'number': current_skill,
+                        'name': '',
+                        'description': ' '.join(current_description)
+                    })
+                
+                current_skill = skill_match.group(1)
+                skill_name = skill_match.group(2).strip('】').strip()
+                current_description = [skill_name] if skill_name else []
+            
+            elif current_skill and line:
+                # Add to current skill description
+                current_description.append(line)
         
-        for file_path in images_dir.iterdir():
-            if file_path.suffix.lower() in supported_formats:
-                image_files.append(file_path)
+        # Don't forget the last skill
+        if current_skill and current_description:
+            skills.append({
+                'number': current_skill,
+                'name': '',
+                'description': ' '.join(current_description)
+            })
+        
+        return skills
+
+    def generate_readme_content(self, folder_path, images, extracted_texts):
+        """Generate README content using the preferred template"""
+        folder_name = folder_path.name
+        all_text = '\n'.join(extracted_texts)
+        
+        # Determine announcement details
+        announcement_type = self.determine_announcement_type(folder_name, all_text)
+        title = self.generate_title_from_folder(folder_name, announcement_type, all_text)
+        date = self.extract_date_from_folder(folder_name)
+        
+        # Generate README content
+        content = f"# {title}\n"
+        content += f"**Date:** {date}\n"
+        content += f"**Type:** {announcement_type}\n"
+        
+        # Add status or event info based on type
+        if announcement_type == "Balance Update":
+            content += f"**Status:** Active\n"
+        elif announcement_type == "New Character Release":
+            content += f"**Event:** Special Release\n"
+        
+        content += "\n## Announcement Images\n"
+        
+        # Add images with descriptive names
+        for i, img in enumerate(images, 1):
+            img_name = img.name
+            if announcement_type == "New Character Release":
+                if i == 1:
+                    desc = "Main Announcement"
+                else:
+                    desc = f"Character Introduction {i}"
+            elif announcement_type == "Balance Update":
+                desc = f"Balance Update Image {i}"
+            else:
+                desc = f"Announcement Image {i}"
+            
+            content += f"![{desc}](images/{img_name})\n"
+        
+        content += "\n## Summary\n"
+        
+        # Generate summary based on type and extracted skills
+        if announcement_type == "New Character Release":
+            skills = self.extract_skills_from_text(all_text)
+            if skills:
+                content += f"New character release with {len(skills)} unique skills:\n\n"
+                for skill in skills:
+                    if skill['description']:
+                        content += f"- 技能{skill['number']}：{skill['description']}\n"
+            else:
+                content += "New character release with unique abilities and skills.\n"
+        
+        elif announcement_type == "Balance Update":
+            skills = self.extract_skills_from_text(all_text)
+            if skills:
+                content += "Character balance adjustments including:\n\n"
+                for skill in skills:
+                    if skill['description']:
+                        content += f"- 技能{skill['number']} Changes: {skill['description']}\n"
+            else:
+                content += "Balance update with character skill and parameter adjustments.\n"
+        
+        else:
+            # General summary
+            if all_text.strip():
+                # Take first few meaningful lines as summary
+                lines = [line.strip() for line in all_text.split('\n') if len(line.strip()) > 10]
+                if lines:
+                    content += f"{lines[0]}\n"
+                    if len(lines) > 1:
+                        content += f"\nAdditional details available in announcement images.\n"
+        
+        # Add notes section
+        content += "\n## Notes\n"
+        content += "- Images automatically detected and processed\n"
+        content += "- To override OCR text extraction, create a `text.txt` file in this folder\n"
+        content += "- For detailed information, please refer to the original announcement images above\n"
+        
+        content += "\n---\n"
+        content += f"*Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
+        
+        return content
+
+    def process_folder(self, folder_path):
+        """Process a single announcement folder"""
+        print(f"Processing folder: {folder_path}")
+        
+        images_path = folder_path / "images"
+        readme_path = folder_path / "README.md"
+        
+        # Skip if README already exists and is not auto-generated
+        if readme_path.exists():
+            with open(readme_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if "*Auto-generated on" not in content:
+                    print(f"  Skipping - README exists and is not auto-generated")
+                    return False
+        
+        # Get all image files
+        image_files = sorted(list(images_path.glob("*.jpg")) + 
+                           list(images_path.glob("*.png")) + 
+                           list(images_path.glob("*.jpeg")))
         
         if not image_files:
-            return None
-            
-        # Sort images by name
-        image_files.sort(key=lambda x: x.name)
+            print(f"  No images found in {images_path}")
+            return False
         
-        # Extract text from all images
-        all_text = []
-        for image_path in image_files:
-            text = self.extract_text_from_image(image_path)
-            if text:
-                all_text.append(text)
+        print(f"  Found {len(image_files)} images")
         
-        combined_text = ' '.join(all_text)
-        
-        # Analyze content
-        announcement_type = self.analyze_announcement_type(combined_text, folder_path.name)
-        character_name = self.extract_character_name(combined_text)
-        
-        # Extract date from folder name
-        date_match = re.match(r'(\d{4}-\d{2}-\d{2})', folder_path.name)
-        announcement_date = date_match.group(1) if date_match else datetime.now().strftime('%Y-%m-%d')
-        
-        # Generate announcement data
-        announcement_data = {
-            'folder_name': folder_path.name,
-            'type': announcement_type,
-            'character_name': character_name,
-            'date': announcement_date,
-            'image_files': [img.name for img in image_files],
-            'extracted_text': combined_text[:1000] + '...' if len(combined_text) > 1000 else combined_text,
-            'processed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-        return announcement_data
-
-    def generate_announcement_readme(self, announcement_data, folder_path):
-        """Generate README.md for individual announcement"""
-        folder_name = announcement_data['folder_name']
-        ann_type = announcement_data['type']
-        char_name = announcement_data['character_name']
-        image_files = announcement_data['image_files']
-        announcement_date = announcement_data['date']
-        
-        # Create title
-        if char_name:
-            title = f"{ann_type} - {char_name}"
+        # Check for manual text override
+        text_override_path = folder_path / "text.txt"
+        if text_override_path.exists():
+            print(f"  Using manual text override from text.txt")
+            with open(text_override_path, 'r', encoding='utf-8') as f:
+                extracted_texts = [f.read()]
         else:
-            title = f"Kingdom Story {ann_type}"
-            
-        # Generate markdown content
-        markdown = f"""# {title}
-
-**Date:** {announcement_date}  
-**Type:** {ann_type}  
-**Status:** Active  
-
-## Announcement Images
-
-"""
+            # Extract text from images
+            print(f"  Extracting text from images...")
+            extracted_texts = []
+            for img_path in image_files[:10]:  # Limit to first 10 images
+                text = self.extract_text_from_image(img_path)
+                if text.strip():
+                    extracted_texts.append(text)
+                    print(f"    Extracted text from {img_path.name}: {len(text)} chars")
         
-        # Add all images
-        for i, image_file in enumerate(image_files, 1):
-            markdown += f"### Image {i}\n"
-            markdown += f"![{ann_type} Image {i}](images/{image_file})\n\n"
+        # Generate README content
+        readme_content = self.generate_readme_content(folder_path, image_files, extracted_texts)
         
-        # Add extracted text section if available and not too messy
-        extracted_text = announcement_data['extracted_text']
-        if extracted_text and len(extracted_text) > 20:
-            # Only include if text seems reasonably clean
-            clean_lines = [line.strip() for line in extracted_text.split('\n') if line.strip() and len(line.strip()) > 3]
-            if clean_lines:
-                markdown += f"""## Extracted Text Content
-
-```
-{chr(10).join(clean_lines[:10])}  # Limit to first 10 clean lines
-{"..." if len(clean_lines) > 10 else ""}
-```
-
-> **Note:** Text extracted using OCR technology. Some characters may be inaccurate.
-
-"""
+        # Write README
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(readme_content)
         
-        markdown += f"""## Notes
-
-- Images automatically detected and processed
-- To override OCR text extraction, create a `text.txt` file in this folder
-- For detailed information, please refer to the original announcement images above
-
----
-
-*Auto-generated on {announcement_data['processed_at']}*
-"""
+        print(f"  Generated README.md")
         
-        return markdown
+        # Add to new entries for main README
+        self.new_entries.append({
+            'folder': folder_path.name,
+            'title': self.generate_title_from_folder(
+                folder_path.name, 
+                self.determine_announcement_type(folder_path.name, ' '.join(extracted_texts)),
+                ' '.join(extracted_texts)
+            ),
+            'date': self.extract_date_from_folder(folder_path.name),
+            'type': self.determine_announcement_type(folder_path.name, ' '.join(extracted_texts))
+        })
+        
+        return True
 
-    def generate_new_entries_file(self, all_announcements):
-        """Generate new-entries.md with proposed additions for main README"""
-        if not all_announcements:
+    def generate_new_entries_file(self):
+        """Generate new-entries.md file for manual integration"""
+        if not self.new_entries:
             return
         
-        # Sort announcements by date (newest first)
-        sorted_announcements = sorted(all_announcements, 
-                                    key=lambda x: x['date'], 
-                                    reverse=True)
+        content = "# New Entries for Main README\n\n"
+        content += "Copy the entries below to your main `announcements/README.md` file:\n\n"
+        content += "```markdown\n"
         
-        markdown = f"""# Proposed Additions for announcements/README.md
-
-> **Instructions:** Copy the sections below and paste them into the appropriate places in `announcements/README.md`
-
-## For "🆕 Latest Updates" Section
-
-Add these entries to your "Recent Announcements" list:
-
-"""
+        for entry in reversed(self.new_entries):  # Most recent first
+            content += f"- **[{entry['title']}]({entry['folder']}/README.md)** "
+            content += f"({entry['date']}) - {entry['type']}\n"
         
-        # Add latest updates entries
-        for announcement in sorted_announcements:
-            folder_name = announcement['folder_name']
-            ann_type = announcement['type']
-            char_name = announcement['character_name']
-            date = announcement['date']
-            
-            # Format date for display
-            try:
-                date_obj = datetime.strptime(date, '%Y-%m-%d')
-                display_date = date_obj.strftime('%b %d, %Y')
-            except:
-                display_date = date
-            
-            title = f"{ann_type} - {char_name}" if char_name else ann_type
-            markdown += f"- **{display_date}** - [{title}]({folder_name}/) - {ann_type}\n"
+        content += "```\n\n"
+        content += "After copying these entries to the main README, you can delete this file.\n"
         
-        markdown += "\n## For \"📁 All Announcements\" Table\n\n"
-        markdown += "Add these rows to your announcements table:\n\n"
-        markdown += "```markdown\n"
+        with open("new-entries.md", 'w', encoding='utf-8') as f:
+            f.write(content)
         
-        # Add table entries
-        for announcement in sorted_announcements:
-            folder_name = announcement['folder_name']
-            ann_type = announcement['type']
-            char_name = announcement['character_name']
-            date = announcement['date']
-            
-            title = char_name if char_name else ann_type
-            markdown += f"| {date} | {ann_type} | {title} | [View →]({folder_name}/) |\n"
-        
-        markdown += "```\n\n## For \"🏷️ Categories\" Section\n\n"
-        
-        # Group by type for categories
-        by_type = {}
-        for announcement in sorted_announcements:
-            ann_type = announcement['type']
-            if ann_type not in by_type:
-                by_type[ann_type] = []
-            by_type[ann_type].append(announcement)
-        
-        markdown += "Add these entries to the appropriate category sections:\n\n"
-        
-        for ann_type, announcements in by_type.items():
-            # Determine icon
-            if ann_type == "New Character":
-                icon = "🎭"
-            elif ann_type == "Event":
-                icon = "🎉"
-            elif ann_type == "Balance Update":
-                icon = "⚖️"
-            else:
-                icon = "🔧"
-                
-            markdown += f"### {icon} {ann_type}\n"
-            markdown += "```markdown\n"
-            
-            for announcement in announcements:
-                folder_name = announcement['folder_name']
-                char_name = announcement['character_name']
-                date = announcement['date']
-                
-                # Format date for display
-                try:
-                    date_obj = datetime.strptime(date, '%Y-%m-%d')
-                    display_date = date_obj.strftime('%b %d, %Y')
-                except:
-                    display_date = date
-                
-                title = char_name if char_name else ann_type
-                markdown += f"- [{title}]({folder_name}/) - {display_date}\n"
-            
-            markdown += "```\n\n"
-        
-        markdown += f"""---
-
-## Summary
-
-**Generated {len(all_announcements)} new announcement(s):**
-
-"""
-        
-        for announcement in sorted_announcements:
-            markdown += f"- `{announcement['folder_name']}/` - {announcement['type']}\n"
-        
-        markdown += f"""
-
-**Next Steps:**
-1. Review the individual README files in each announcement folder
-2. Edit any content that needs correction
-3. Copy the desired entries above into your main `announcements/README.md`
-4. Delete this `new-entries.md` file after integration
-5. Merge this Pull Request
-
-*Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
-"""
-        
-        # Write the file
-        with open('new-entries.md', 'w', encoding='utf-8') as f:
-            f.write(markdown)
-        
-        print(f"✅ Generated new-entries.md with {len(all_announcements)} proposed additions")
+        print(f"Generated new-entries.md with {len(self.new_entries)} entries")
 
     def run(self):
-        """Main scanning function - only process new folders"""
-        print("🔍 Scanning for new announcement folders...")
+        """Main processing function"""
+        print("🔍 Kingdom Story Photo Scanner - Enhanced Version")
+        print("=" * 50)
         
-        if not self.announcements_path.exists():
-            print("❌ Announcements directory not found!")
+        folders = self.find_announcement_folders()
+        if not folders:
+            print("No announcement folders found")
             return
         
-        # Find folders that need processing
-        new_folders = self.find_new_announcement_folders()
+        print(f"Found {len(folders)} announcement folders")
         
-        if not new_folders:
-            print("ℹ️ No new announcement folders found to process")
-            return
+        processed_count = 0
+        for folder in folders:
+            if self.process_folder(folder):
+                processed_count += 1
         
-        print(f"📂 Found {len(new_folders)} new folders to process:")
-        for folder in new_folders:
-            print(f"  - {folder.name}")
-        
-        processed_announcements = []
-        processing_log = self.load_processing_log()
-        
-        # Process each new folder
-        for folder in new_folders:
-            print(f"\n📸 Processing folder: {folder.name}")
-            
-            announcement_data = self.scan_announcement_folder(folder)
-            if announcement_data:
-                processed_announcements.append(announcement_data)
-                
-                # Generate individual README
-                readme_content = self.generate_announcement_readme(announcement_data, folder)
-                readme_path = folder / 'README.md'
-                
-                with open(readme_path, 'w', encoding='utf-8') as f:
-                    f.write(readme_content)
-                
-                # Add to processing log
-                processing_log['processed_folders'].append(folder.name)
-                
-                print(f"✅ Generated {folder.name}/README.md")
-            else:
-                print(f"❌ Failed to process {folder.name}")
-        
-        if processed_announcements:
-            # Generate new entries file for main README
-            self.generate_new_entries_file(processed_announcements)
-            
-            # Update processing log
-            self.save_processing_log(processing_log)
-            
-            print(f"\n🎉 Successfully processed {len(processed_announcements)} new announcement folders")
-            print("📋 Created new-entries.md with proposed README additions")
-            print("🔄 Pull Request will be created for your review")
+        if processed_count > 0:
+            self.generate_new_entries_file()
+            print(f"\n✅ Successfully processed {processed_count} folders")
+            print("📝 Check new-entries.md for entries to add to main README")
         else:
-            print("ℹ️ No announcements were successfully processed")
+            print("\n ℹ️ No new content to process")
 
 if __name__ == "__main__":
     scanner = KingdomStoryPhotoScanner()
