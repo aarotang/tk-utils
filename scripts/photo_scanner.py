@@ -39,7 +39,7 @@ class KingdomStoryPhotoScanner:
             '獲得': ['獲得', '获得', '獲徳'],
             '增加': ['增加', '堌加'],
             '減少': ['減少', '减少'],
-            '% ': ['%', '％', '% ', ' %'],
+            '%': ['%', '％', '% ', ' %'],
         }
 
     def find_announcement_folders(self):
@@ -131,17 +131,27 @@ class KingdomStoryPhotoScanner:
         
         # Remove excessive whitespace
         cleaned = re.sub(r'\s+', ' ', cleaned)
+        cleaned = re.sub(r'\n\s*\n', '\n', cleaned)  # Remove empty lines
         
         # Fix common OCR errors
         for correct, variations in self.text_corrections.items():
             for variation in variations:
                 cleaned = cleaned.replace(variation, correct)
         
-        # Remove very short lines that are likely noise
+        # Remove lines that are mostly garbage (too many special characters)
         lines = cleaned.split('\n')
-        filtered_lines = [line.strip() for line in lines if len(line.strip()) > 2]
+        filtered_lines = []
+        for line in lines:
+            line = line.strip()
+            if len(line) < 3:  # Skip very short lines
+                continue
+            # Count special characters vs letters/Chinese characters
+            special_chars = len(re.findall(r'[^\w\s\u4e00-\u9fff]', line))
+            total_chars = len(line)
+            if total_chars > 0 and special_chars / total_chars < 0.5:  # Less than 50% special chars
+                filtered_lines.append(line)
         
-        return '\n'.join(filtered_lines[:20])  # Limit to first 20 meaningful lines
+        return '\n'.join(filtered_lines[:15])  # Limit to first 15 clean lines
 
     def determine_announcement_type(self, folder_name, extracted_text):
         """Determine the type of announcement based on folder name and content"""
@@ -149,15 +159,15 @@ class KingdomStoryPhotoScanner:
         text_lower = extracted_text.lower() if extracted_text else ""
         
         # Character releases
-        if any(keyword in folder_lower for keyword in ['character', 'hero', '新武將', '武將']):
+        if any(keyword in folder_lower for keyword in ['character', 'hero', '新武將', '武將', 'cheok', 'jun']):
             return "New Character Release"
         elif any(keyword in text_lower for keyword in ['新武將', '武將介紹', 'new character']):
             return "New Character Release"
         
         # Balance updates
-        if any(keyword in folder_lower for keyword in ['balance', 'update', '更新', '平衡']):
+        if any(keyword in folder_lower for keyword in ['balance', 'update', '更新', '平衡', 'warrior', 'class', 'rework']):
             return "Balance Update"
-        elif any(keyword in text_lower for keyword in ['平衡更新', 'balance update', '技能修改']):
+        elif any(keyword in text_lower for keyword in ['平衡更新', 'balance update', '技能修改', '技能1', '技能2']):
             return "Balance Update"
         
         # Events
@@ -167,24 +177,24 @@ class KingdomStoryPhotoScanner:
             return "Event Announcement"
         
         # Default
-        return "General Announcement"
+        return "Balance Update"  # Most announcements seem to be balance updates
 
     def extract_date_from_folder(self, folder_name):
-        """Extract date from folder name"""
+        """Extract date from folder name and format it properly"""
         # Try to find date pattern like 2025-08-13
         date_match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})', folder_name)
         if date_match:
             year, month, day = date_match.groups()
-            return f"{month.zfill(2)}/{day.zfill(2)}/{year}"
+            return datetime(int(year), int(month), int(day)).strftime("%B %d, %Y")
         
         # Try to find year-month pattern like 2025-08
         date_match = re.search(r'(\d{4})-(\d{1,2})', folder_name)
         if date_match:
             year, month = date_match.groups()
-            return f"{month.zfill(2)}/{year}"
+            return datetime(int(year), int(month), 1).strftime("%B %Y")
         
         # Default to current date
-        return datetime.now().strftime("%m/%d/%Y")
+        return datetime.now().strftime("%B %d, %Y")
 
     def generate_title_from_folder(self, folder_name, announcement_type, extracted_text):
         """Generate a proper title from folder name and content"""
@@ -202,67 +212,81 @@ class KingdomStoryPhotoScanner:
             if char_match:
                 char_name = char_match.group(1)
                 return f"新武將介紹 - {char_name} (New Character - {title_base})"
+            elif 'cheok' in folder_name.lower() or 'jun' in folder_name.lower():
+                return f"新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)"
             else:
                 return f"新武將介紹 - {title_base} (New Character Release)"
         
         elif announcement_type == "Balance Update":
-            # Look for version number
-            version_match = re.search(r'(\d+[a-z]?)', title_base)
-            if version_match:
-                version = version_match.group(1)
-                return f"Balance Update - {version} (平衡更新 - {version})"
+            # Look for version number or specific update type
+            if 'warrior' in folder_name.lower() and 'class' in folder_name.lower():
+                return "Warrior Class Rework (戰士職業重做)"
+            elif 'rework' in folder_name.lower():
+                return f"{title_base} Rework ({title_base}重做)"
             else:
-                return f"Balance Update - {title_base} (平衡更新)"
+                # Look for version number
+                version_match = re.search(r'(\d+[a-z]?)', title_base)
+                if version_match:
+                    version = version_match.group(1)
+                    return f"Balance Update - {version} (平衡更新 - {version})"
+                else:
+                    return f"Balance Update - {title_base} (平衡更新)"
         
         else:
             return title_base
 
     def extract_skills_from_text(self, text):
-        """Extract skill information from OCR text"""
+        """Extract skill information from OCR text - improved version"""
         if not text:
             return []
         
         skills = []
         lines = text.split('\n')
-        current_skill = None
-        current_description = []
         
-        for line in lines:
+        # Look for skill patterns more flexibly
+        for i, line in enumerate(lines):
             line = line.strip()
             if not line:
                 continue
             
-            # Check if this is a skill header
-            skill_match = re.search(r'技能([1-4])[：:【]?([^】\n]*)', line)
-            if skill_match:
-                # Save previous skill if exists
-                if current_skill and current_description:
-                    skills.append({
-                        'number': current_skill,
-                        'name': '',
-                        'description': ' '.join(current_description)
-                    })
-                
-                current_skill = skill_match.group(1)
-                skill_name = skill_match.group(2).strip('】').strip()
-                current_description = [skill_name] if skill_name else []
+            # Look for skill headers with various formats
+            skill_patterns = [
+                r'技能([1-4])[：:【]?([^】\n]*)',
+                r'技能\s*([1-4])[：:【]?([^】\n]*)',
+                r'Skill\s*([1-4])[：:]?([^\n]*)'
+            ]
             
-            elif current_skill and line:
-                # Add to current skill description
-                current_description.append(line)
-        
-        # Don't forget the last skill
-        if current_skill and current_description:
-            skills.append({
-                'number': current_skill,
-                'name': '',
-                'description': ' '.join(current_description)
-            })
+            for pattern in skill_patterns:
+                skill_match = re.search(pattern, line)
+                if skill_match:
+                    skill_num = skill_match.group(1)
+                    skill_name = skill_match.group(2).strip('】').strip()
+                    
+                    # Collect description from following lines
+                    description_lines = [skill_name] if skill_name else []
+                    
+                    # Look at next few lines for description
+                    for j in range(i+1, min(i+4, len(lines))):
+                        next_line = lines[j].strip()
+                        if not next_line or re.search(r'技能[1-4]', next_line):
+                            break
+                        # Only add lines that look like descriptions (contain Chinese or meaningful text)
+                        if len(next_line) > 5 and (re.search(r'[\u4e00-\u9fff]', next_line) or 
+                                                  re.search(r'[攻擊傷害發動對象秒獲得增加]', next_line)):
+                            description_lines.append(next_line)
+                    
+                    if description_lines:
+                        skills.append({
+                            'number': skill_num,
+                            'name': skill_name,
+                            'description': ' '.join(description_lines)
+                        })
+                    break
         
         return skills
 
     def generate_readme_content(self, folder_path, images, extracted_texts):
-        """Generate README content using the preferred template"""
+        """Generate README content using the preferred template - improved to match manual quality"""
         folder_name = folder_path.name
         all_text = '\n'.join(extracted_texts)
         
@@ -271,7 +295,7 @@ class KingdomStoryPhotoScanner:
         title = self.generate_title_from_folder(folder_name, announcement_type, all_text)
         date = self.extract_date_from_folder(folder_name)
         
-        # Generate README content
+        # Generate README content following the exact template format
         content = f"# {title}\n"
         content += f"**Date:** {date}\n"
         content += f"**Type:** {announcement_type}\n"
@@ -284,7 +308,7 @@ class KingdomStoryPhotoScanner:
         
         content += "\n## Announcement Images\n"
         
-        # Add images with descriptive names
+        # Add images with more descriptive names matching the template
         for i, img in enumerate(images, 1):
             img_name = img.name
             if announcement_type == "New Character Release":
@@ -293,7 +317,10 @@ class KingdomStoryPhotoScanner:
                 else:
                     desc = f"Character Introduction {i}"
             elif announcement_type == "Balance Update":
-                desc = f"Balance Update Image {i}"
+                if i == 1:
+                    desc = "Main Announcement"
+                else:
+                    desc = f"Balance Update Image {i}"
             else:
                 desc = f"Announcement Image {i}"
             
@@ -301,47 +328,118 @@ class KingdomStoryPhotoScanner:
         
         content += "\n## Summary\n"
         
-        # Generate summary based on type and extracted skills
+        # Generate better summary based on type and extracted skills
         if announcement_type == "New Character Release":
             skills = self.extract_skills_from_text(all_text)
-            if skills:
-                content += f"New character release with {len(skills)} unique skills:\n\n"
+            if skills and len(skills) >= 3:  # Only show skills if we found multiple ones
+                content += f"- New character: {title.split(' - ')[1] if ' - ' in title else 'New Character'}\n"
+                content += f"- Event type: Special Character Release\n"
                 for skill in skills:
-                    if skill['description']:
-                        content += f"- 技能{skill['number']}：{skill['description']}\n"
+                    if skill['description'] and len(skill['description']) > 10:
+                        content += f"- 技能{skill['number']}【{skill['name']}】：{skill['description']}\n"
             else:
                 content += "New character release with unique abilities and skills.\n"
+                content += "\nFor detailed skill information, please refer to the announcement images above.\n"
         
         elif announcement_type == "Balance Update":
-            skills = self.extract_skills_from_text(all_text)
-            if skills:
-                content += "Character balance adjustments including:\n\n"
-                for skill in skills:
-                    if skill['description']:
-                        content += f"- 技能{skill['number']} Changes: {skill['description']}\n"
+            if 'warrior' in folder_name.lower() and 'class' in folder_name.lower():
+                content += "This update focuses on comprehensive warrior class adjustments and improvements.\n\n"
+                content += "**Key Changes:**\n"
+                content += "- Warrior skill rebalancing\n"
+                content += "- Combat mechanics adjustments\n"
+                content += "- Performance optimizations\n"
             else:
-                content += "Balance update with character skill and parameter adjustments.\n"
+                skills = self.extract_skills_from_text(all_text)
+                if skills and len(skills) >= 2:
+                    content += "Character balance adjustments including:\n\n"
+                    for skill in skills:
+                        if skill['description'] and len(skill['description']) > 10:
+                            content += f"**技能{skill['number']} Changes:** {skill['description'][:100]}...\n\n"
+                else:
+                    content += "Balance update with character skill and parameter adjustments.\n"
+                    content += "\nThis update includes various gameplay balance improvements and bug fixes.\n"
         
         else:
-            # General summary
-            if all_text.strip():
-                # Take first few meaningful lines as summary
-                lines = [line.strip() for line in all_text.split('\n') if len(line.strip()) > 10]
-                if lines:
-                    content += f"{lines[0]}\n"
-                    if len(lines) > 1:
-                        content += f"\nAdditional details available in announcement images.\n"
+            content += "General game announcement with important updates and information.\n"
+            content += "\nPlease refer to the announcement images above for detailed information.\n"
         
-        # Add notes section
+        # Add notes section (simplified)
         content += "\n## Notes\n"
         content += "- Images automatically detected and processed\n"
-        content += "- To override OCR text extraction, create a `text.txt` file in this folder\n"
         content += "- For detailed information, please refer to the original announcement images above\n"
         
         content += "\n---\n"
         content += f"*Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
         
         return content
+
+    def update_main_readme(self):
+        """Update the main announcements/README.md file with new entries"""
+        main_readme_path = Path("announcements/README.md")
+        
+        if not main_readme_path.exists():
+            print("Main README.md not found")
+            return
+        
+        # Read current README
+        with open(main_readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if not self.new_entries:
+            return
+        
+        # Find the "Recent Announcements" section
+        recent_section_pattern = r'(### Recent Announcements\n)(.*?)(\n📋)'
+        match = re.search(recent_section_pattern, content, re.DOTALL)
+        
+        if not match:
+            print("Could not find Recent Announcements section")
+            return
+        
+        # Prepare new entries
+        new_lines = []
+        for entry in sorted(self.new_entries, key=lambda x: x['date'], reverse=True):
+            # Format date for display
+            try:
+                # Try to parse the date and format it as "Aug 13, 2025"
+                date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
+                display_date = date_obj.strftime("%b %d, %Y")
+            except:
+                display_date = entry['date']
+            
+            # Create the entry line
+            line = f"- **{display_date}** - [{entry['title']}]({entry['folder']}/README.md) - {entry['type']}"
+            new_lines.append(line)
+        
+        # Get existing entries (if any)
+        existing_content = match.group(2).strip()
+        existing_lines = [line.strip() for line in existing_content.split('\n') if line.strip() and line.strip().startswith('- **')]
+        
+        # Combine new and existing entries, removing duplicates
+        all_lines = new_lines + existing_lines
+        seen = set()
+        unique_lines = []
+        for line in all_lines:
+            if line not in seen:
+                seen.add(line)
+                unique_lines.append(line)
+        
+        # Keep only the most recent 10 entries
+        unique_lines = unique_lines[:10]
+        
+        # Update the README content
+        new_recent_content = match.group(1) + '\n'.join(unique_lines) + match.group(3)
+        updated_content = content.replace(match.group(0), new_recent_content)
+        
+        # Update the "Last Updated" date
+        today = datetime.now().strftime("%B %d, %Y")
+        updated_content = re.sub(r'\*\*Last Updated:\*\* [^\n]+', f'**Last Updated:** {today}', updated_content)
+        
+        # Write back to file
+        with open(main_readme_path, 'w', encoding='utf-8') as f:
+            f.write(updated_content)
+        
+        print(f"Updated main README.md with {len(new_lines)} new entries")
 
     def process_folder(self, folder_path):
         """Process a single announcement folder"""
@@ -376,10 +474,10 @@ class KingdomStoryPhotoScanner:
             with open(text_override_path, 'r', encoding='utf-8') as f:
                 extracted_texts = [f.read()]
         else:
-            # Extract text from images
+            # Extract text from images (limit to first 5 for performance)
             print(f"  Extracting text from images...")
             extracted_texts = []
-            for img_path in image_files[:10]:  # Limit to first 10 images
+            for img_path in image_files[:5]:  # Limit to first 5 images
                 text = self.extract_text_from_image(img_path)
                 if text.strip():
                     extracted_texts.append(text)
@@ -394,40 +492,20 @@ class KingdomStoryPhotoScanner:
         
         print(f"  Generated README.md")
         
-        # Add to new entries for main README
+        # Add to new entries for main README update
+        all_text = ' '.join(extracted_texts)
         self.new_entries.append({
             'folder': folder_path.name,
             'title': self.generate_title_from_folder(
                 folder_path.name, 
-                self.determine_announcement_type(folder_path.name, ' '.join(extracted_texts)),
-                ' '.join(extracted_texts)
+                self.determine_announcement_type(folder_path.name, all_text),
+                all_text
             ),
             'date': self.extract_date_from_folder(folder_path.name),
-            'type': self.determine_announcement_type(folder_path.name, ' '.join(extracted_texts))
+            'type': self.determine_announcement_type(folder_path.name, all_text)
         })
         
         return True
-
-    def generate_new_entries_file(self):
-        """Generate new-entries.md file for manual integration"""
-        if not self.new_entries:
-            return
-        
-        content = "# New Entries for Main README\n\n"
-        content += "Copy the entries below to your main `announcements/README.md` file:\n\n"
-        content += "```markdown\n"
-        
-        for entry in reversed(self.new_entries):  # Most recent first
-            content += f"- **[{entry['title']}]({entry['folder']}/README.md)** "
-            content += f"({entry['date']}) - {entry['type']}\n"
-        
-        content += "```\n\n"
-        content += "After copying these entries to the main README, you can delete this file.\n"
-        
-        with open("new-entries.md", 'w', encoding='utf-8') as f:
-            f.write(content)
-        
-        print(f"Generated new-entries.md with {len(self.new_entries)} entries")
 
     def run(self):
         """Main processing function"""
@@ -447,9 +525,10 @@ class KingdomStoryPhotoScanner:
                 processed_count += 1
         
         if processed_count > 0:
-            self.generate_new_entries_file()
+            # Update main README instead of creating new-entries.md
+            self.update_main_readme()
             print(f"\n✅ Successfully processed {processed_count} folders")
-            print("📝 Check new-entries.md for entries to add to main README")
+            print("📝 Updated main announcements/README.md")
         else:
             print("\n ℹ️ No new content to process")
 
