@@ -55,17 +55,17 @@ class KingdomStoryCouponRedemption:
             },
             'KOR': {
                 'server_name': 'Orchard (KOR)',
-                'ids': ["kpop1", "| MoonLight |"]
+                'ids': ["kpop1", "丨MoonLight丨"]
             },
             'SEA': {
                 'server_name': 'Warlord (SEA)',
-                'ids': ["shushu1", "| MoonLight |"]
+                'ids': ["shushu1", "丨MoonLight丨"]
             },
             'JP': {
                 'server_name': 'Invincible (JP)',
                 'ids': [
                     "IkkiTousen", "陳羅森", "ZII5566", 
-                    "有夢想的咸魚", "李麥特", "天意", "| MoonLight |"
+                    "有夢想的咸魚", "李麥特", "天意", "丨MoonLight丨"
                 ]
             }
         }
