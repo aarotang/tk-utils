@@ -1,4 +1,4 @@
-name: Redeem Kingdom Story Coupon
+name: Redeem Kingdom Story Gift Coupon
 
 on:
   repository_dispatch:
