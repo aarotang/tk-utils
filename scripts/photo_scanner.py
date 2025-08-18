@@ -373,6 +373,40 @@ class KingdomStoryPhotoScanner:
         
         return content
 
+    def parse_date_from_line(self, line):
+        """Extract and parse date from a README line for sorting"""
+        # Extract date from line like "- **Aug 5, 2025** - [title]..."
+        date_match = re.search(r'\*\*([^*]+)\*\*', line)
+        if not date_match:
+            return datetime.min
+        
+        date_str = date_match.group(1).strip()
+        
+        # Try different date formats
+        date_formats = [
+            "%b %d, %Y",      # Aug 5, 2025
+            "%B %d, %Y",      # August 5, 2025
+            "%b %Y",          # Aug 2025
+            "%B %Y",          # August 2025
+            "%Y-%m-%d",       # 2025-08-05
+        ]
+        
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        
+        # If parsing fails, try to extract at least the year
+        year_match = re.search(r'(\d{4})', date_str)
+        if year_match:
+            try:
+                return datetime(int(year_match.group(1)), 1, 1)
+            except:
+                pass
+        
+        return datetime.min
+
     def update_main_readme(self):
         """Update the main announcements/README.md file with new entries"""
         main_readme_path = Path("announcements/README.md")
@@ -398,12 +432,16 @@ class KingdomStoryPhotoScanner:
         
         # Prepare new entries
         new_lines = []
-        for entry in sorted(self.new_entries, key=lambda x: x['date'], reverse=True):
+        for entry in self.new_entries:
             # Format date for display
             try:
                 # Try to parse the date and format it as "Aug 13, 2025"
-                date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
-                display_date = date_obj.strftime("%b %d, %Y")
+                if entry['date'].count(',') > 0:  # Full date like "August 13, 2025"
+                    date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
+                    display_date = date_obj.strftime("%b %d, %Y")
+                else:  # Month/year only like "August 2025"
+                    date_obj = datetime.strptime(entry['date'], "%B %Y")
+                    display_date = date_obj.strftime("%b %Y")
             except:
                 display_date = entry['date']
             
@@ -415,14 +453,26 @@ class KingdomStoryPhotoScanner:
         existing_content = match.group(2).strip()
         existing_lines = [line.strip() for line in existing_content.split('\n') if line.strip() and line.strip().startswith('- **')]
         
-        # Combine new and existing entries, removing duplicates
+        # Combine new and existing entries, removing duplicates by folder name
         all_lines = new_lines + existing_lines
-        seen = set()
+        seen_folders = set()
         unique_lines = []
+        
         for line in all_lines:
-            if line not in seen:
-                seen.add(line)
-                unique_lines.append(line)
+            # Extract folder name from the line to check for duplicates
+            folder_match = re.search(r'\(([^/)]+)/README\.md\)', line)
+            if folder_match:
+                folder_name = folder_match.group(1)
+                if folder_name not in seen_folders:
+                    seen_folders.add(folder_name)
+                    unique_lines.append(line)
+            else:
+                # If we can't extract folder name, check for exact duplicates
+                if line not in unique_lines:
+                    unique_lines.append(line)
+        
+        # Sort all entries by date (newest first)
+        unique_lines.sort(key=self.parse_date_from_line, reverse=True)
         
         # Keep only the most recent 10 entries
         unique_lines = unique_lines[:10]
