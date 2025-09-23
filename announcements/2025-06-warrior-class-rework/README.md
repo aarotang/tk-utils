@@ -1,6 +1,6 @@
 # Warrior Class Rework (戰士職業重做)
 **Date:** June 2025
-**Type:** Balance Update
+**Type:** Warrior Balance Update
 **Status:** Active
 
 ## Announcement Images
@@ -44,4 +44,4 @@ This update focuses on comprehensive warrior class adjustments and improvements.
 - For detailed information, please refer to the original announcement images above
 
 ---
-*Auto-generated on 2025-09-23 20:18:01*
+*Auto-generated on 2025-08-18 22:57:28*
