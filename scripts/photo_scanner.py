@@ -155,29 +155,114 @@ class KingdomStoryPhotoScanner:
 
     def determine_announcement_type(self, folder_name, extracted_text):
         """Determine the type of announcement based on folder name and content"""
-        folder_lower = folder_name.lower()
+
+        # Initialize scores
+        character_score = 0
+        balance_score = 0  
+        event_score = 0
+        
+        # Remove date prefix from folder name for analysis
+        clean_folder = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name.lower())
         text_lower = extracted_text.lower() if extracted_text else ""
         
-        # Character releases
-        if any(keyword in folder_lower for keyword in ['character', 'hero', '新武將', '武將', 'cheok', 'jun']):
-            return "New Character Release"
-        elif any(keyword in text_lower for keyword in ['新武將', '武將介紹', 'new character']):
-            return "New Character Release"
+        # FOLDER NAME SCORING (higher weight = 3 points)
+        character_folder_keywords = [
+            'new', 'character', 'hero', 'cheok', 'jun', 'sun', 'shang', 'xiang',
+            '武將', 'hero', 'warrior-new', 'introduction'
+        ]
         
-        # Balance updates
-        if any(keyword in folder_lower for keyword in ['balance', 'update', '更新', '平衡', 'warrior', 'class', 'rework']):
-            return "Balance Update"
-        elif any(keyword in text_lower for keyword in ['平衡更新', 'balance update', '技能修改', '技能1', '技能2']):
-            return "Balance Update"
+        balance_folder_keywords = [
+            'balance', 'rework', 'update', 'warrior-class', 'class', 
+            '平衡', '更新', 'modification', 'adjustment', 'nerf', 'buff'
+        ]
         
-        # Events
-        if any(keyword in folder_lower for keyword in ['event', '活動', '事件']):
-            return "Event Announcement"
-        elif any(keyword in text_lower for keyword in ['活動', 'event', '限時']):
-            return "Event Announcement"
+        event_folder_keywords = [
+            'event', '活動', '限時', 'limited', 'special', 'celebration'
+        ]
+
+        # Score folder name keywords
+        for keyword in character_folder_keywords:
+            if keyword in clean_folder:
+                character_score += 3
+                
+        for keyword in balance_folder_keywords:
+            if keyword in clean_folder:
+                balance_score += 3
+                
+        for keyword in event_folder_keywords:
+            if keyword in clean_folder:
+                event_score += 3
         
-        # Default
-        return "Balance Update"  # Most announcements seem to be balance updates
+        # OCR TEXT SCORING (moderate weight = 2 points)
+        character_text_keywords = [
+            '新武將', '武將介紹', 'new character', '角色', '職業介紹',
+            'character introduction', '新增角色', 'hero introduction'
+        ]
+        
+        balance_text_keywords = [
+            '平衡更新', 'balance update', '技能修改', 'skill modification',
+            '技能1', '技能2', '技能3', '技能4', 'rework', '重做'
+        ]
+        
+        event_text_keywords = [
+            '活動', 'event', '限時', 'limited time', '特別', 'special event'
+        ]
+
+        # Score OCR text keywords
+        for keyword in character_text_keywords:
+            if keyword in text_lower:
+                character_score += 2
+                
+        for keyword in balance_text_keywords:
+            if keyword in text_lower:
+                balance_score += 2
+                
+        for keyword in event_text_keywords:
+            if keyword in text_lower:
+                event_score += 2
+        
+        # SPECIAL PATTERNS (bonus points)
+        # Character names pattern bonus
+        if re.search(r'(cheok|jun|sun|shang|xiang|zhang|zhao|liu|cao)', clean_folder):
+            character_score += 2
+            
+        # Version number pattern suggests balance update
+        if re.search(r'v?\d+[a-z]?|version', clean_folder):
+            balance_score += 2
+            
+        # Multiple skills mentioned suggests balance update
+        skill_mentions = len(re.findall(r'技能[1-4]', text_lower))
+        if skill_mentions >= 3:
+            balance_score += 2
+        elif skill_mentions >= 1:
+            # Single skill mention could be character introduction
+            character_score += 1
+
+        # CLASSIFICATION LOGIC
+        min_threshold = 3
+        scores = {
+            'New Character Release': character_score,
+            'Balance Update': balance_score,
+            'Event Announcement': event_score
+        }
+        
+        # Find highest scoring type
+        max_score = max(scores.values())
+        max_types = [type_name for type_name, score in scores.items() if score == max_score]
+        
+        # If highest score meets threshold
+        if max_score >= min_threshold:
+            # If tied, use priority: Character > Balance > Event
+            if 'New Character Release' in max_types:
+                return 'New Character Release'
+            elif 'Balance Update' in max_types:
+                return 'Balance Update'
+            else:
+                return 'Event Announcement'
+        
+        # If no type meets threshold, return unknown
+        return 'Unknown - Requires Manual Review'   
+
 
     def extract_date_from_folder(self, folder_name):
         """Extract date from folder name and format it properly"""
