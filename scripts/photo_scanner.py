@@ -642,6 +642,94 @@ class KingdomStoryPhotoScanner:
         
         return True
 
+
+    def update_main_root_readme(self):
+    """Update the main root README.md file with new announcements"""
+    main_readme_path = Path("README.md")
+    
+    if not main_readme_path.exists():
+        print("Main root README.md not found")
+        return
+    
+    if not self.new_entries:
+        return
+    
+    # Read current README
+    with open(main_readme_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Find the "Recent Announcements" section
+    recent_section_pattern = r'(### Recent Announcements\n)(.*?)(\n📋)'
+    match = re.search(recent_section_pattern, content, re.DOTALL)
+    
+    if not match:
+        print("Could not find Recent Announcements section in main README")
+        return
+    
+    # Prepare new entries for main README
+    new_lines = []
+    for entry in self.new_entries:
+        # Format date for display
+        try:
+            if entry['date'].count(',') > 0:  # Full date like "August 13, 2025"
+                date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
+                display_date = date_obj.strftime("%b %d, %Y")
+            else:  # Month/year only like "August 2025"
+                date_obj = datetime.strptime(entry['date'], "%B %Y")
+                display_date = date_obj.strftime("%b %Y")
+        except:
+            display_date = entry['date']
+        
+        # Create entry line for main README (with announcements/ prefix)
+        line = f"- **{display_date}** - [{entry['title']}](announcements/{entry['folder']}/README.md) - {entry['type']}"
+        new_lines.append(line)
+    
+    # Get existing entries
+    existing_content = match.group(2).strip()
+    existing_lines = [line.strip() for line in existing_content.split('\n') if line.strip() and line.strip().startswith('- **')]
+    
+    # Combine new and existing entries, removing duplicates
+    all_lines = new_lines + existing_lines
+    seen_folders = set()
+    unique_lines = []
+    
+    for line in all_lines:
+        # Extract folder name from the line to check for duplicates
+        folder_match = re.search(r'announcements/([^/)]+)/README\.md', line)
+        if folder_match:
+            folder_name = folder_match.group(1)
+            if folder_name not in seen_folders:
+                seen_folders.add(folder_name)
+                unique_lines.append(line)
+        else:
+            # Check for exact duplicates if folder extraction fails
+            if line not in unique_lines:
+                unique_lines.append(line)
+    
+    # Sort entries by date (newest first)
+    unique_lines.sort(key=self.parse_date_from_line, reverse=True)
+    
+    # Keep only the most recent 5 entries for main README (less cluttered)
+    unique_lines = unique_lines[:5]
+    
+    # Update the README content
+    new_recent_content = match.group(1) + '\n'.join(unique_lines) + match.group(3)
+    updated_content = content.replace(match.group(0), new_recent_content)
+    
+    # Update the "Last Updated" date at bottom
+    today = datetime.now().strftime("%B %d, %Y")
+    updated_content = re.sub(
+        r'\*\*Last Updated:\*\* [^\n]+', 
+        f'**Last Updated:** {today}', 
+        updated_content
+    )
+    
+    # Write back to file
+    with open(main_readme_path, 'w', encoding='utf-8') as f:
+        f.write(updated_content)
+    
+    print(f"Updated main root README.md with {len(new_lines)} new announcement entries")
+    
     def run(self):
         """Main processing function"""
         print("🔍 Kingdom Story Photo Scanner - Enhanced Version")
@@ -662,8 +750,17 @@ class KingdomStoryPhotoScanner:
         if processed_count > 0:
             # Update main README instead of creating new-entries.md
             self.update_main_readme()
+
+            # Update main root README
+            self.update_main_root_readme()
+
+            # Create summary files for GitHub Action
+            self.create_summary_files()
+            
             print(f"\n✅ Successfully processed {processed_count} folders")
-            print("📝 Updated main announcements/README.md")
+            print("📝 Updated announcements/README.md")
+            print("📝 Updated main root README.md")  # <-- ADD THIS LINE
+            print("📄 Created summary files for PR")
         else:
             print("\n ℹ️ No new content to process")
 
