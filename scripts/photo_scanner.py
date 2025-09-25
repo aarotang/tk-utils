@@ -755,12 +755,12 @@ class KingdomStoryPhotoScanner:
             self.update_main_root_readme()
 
             # Create summary files for GitHub Action
-            self.create_summary_files()
+            # self.create_summary_files()
             
             print(f"\n✅ Successfully processed {processed_count} folders")
             print("📝 Updated announcements/README.md")
             print("📝 Updated main root README.md")  # <-- ADD THIS LINE
-            print("📄 Created summary files for PR")
+            # print("📄 Created summary files for PR")
         else:
             print("\n ℹ️ No new content to process")
 
