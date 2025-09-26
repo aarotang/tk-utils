@@ -44,4 +44,4 @@ This update focuses on comprehensive warrior class adjustments and improvements.
 - For detailed information, please refer to the original announcement images above
 
 ---
-*Auto-generated on 2025-08-18 22:57:28*
+*Auto-generated on 2025-09-25 23:59:56*
