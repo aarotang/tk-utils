@@ -34,7 +34,7 @@ class KingdomStoryPhotoScanner:
         }
        
         # Enable debug mode (creates debug text files)
-        self.debug_mode = True
+        self.debug_mode = False
 
     def find_announcement_folders(self):
         """Find all announcement folders with images"""
