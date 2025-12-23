@@ -25,7 +25,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        pip install pillow pytesseract opencv-python-headless
+        pip install pillow pytesseract opencv-python-headless pypinyin
         sudo apt-get update
         sudo apt-get install tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-chi-sim
         
