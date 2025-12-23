@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Kingdom Story Photo Scanner
+Kingdom Story Photo Scanner - IMPROVED VERSION
 Features:
-- Orange Text Extraction (HSV Masking) for Character Names
-- Standard Grayscale Preprocessing for Body Text
+- Two-Pass OCR: Orange text for headers/names + Standard grayscale for body text
+- Better text extraction and character recognition
 - Auto-generation of README files
 """
 
@@ -22,9 +22,11 @@ class KingdomStoryPhotoScanner:
         self.announcement_dirs = []
         self.new_entries = []
        
-        # OCR Configuration
-        # --psm 6: Assume a single uniform block of text
+        # OCR Configuration for Traditional Chinese
         self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
+        
+        # For sections with more sparse text
+        self.ocr_config_sparse = r'--oem 3 --psm 11 -l chi_tra'
 
     def find_announcement_folders(self):
         """Find all announcement folders with images"""
@@ -48,180 +50,263 @@ class KingdomStoryPhotoScanner:
 
     def extract_orange_text(self, image_path):
         """
-        Specifically isolates Orange/Red text for OCR (e.g., Character Names).
+        Extract Orange/Red text for headers and character names.
+        Uses HSV color masking to isolate orange text.
         """
         try:
-            # Load Image
             img = cv2.imread(str(image_path))
             if img is None:
                 return ""
 
-            # Convert to HSV
+            # Convert to HSV color space
             hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-            # Define Orange/Red Ranges (0-25 and 160-180)
+            # Define Orange/Red color ranges
+            # Range 1: Orange (0-25 in hue)
             lower_red1 = np.array([0, 70, 50])
             upper_red1 = np.array([25, 255, 255])
+            
+            # Range 2: Red (160-180 in hue)
             lower_red2 = np.array([160, 70, 50])
             upper_red2 = np.array([180, 255, 255])
 
-            # Create Masks
+            # Create masks for both ranges
             mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
             mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
             combined_mask = cv2.bitwise_or(mask1, mask2)
 
-            # Invert for Tesseract (Black text on White background)
-            final_image = cv2.bitwise_not(combined_mask)
+            # Invert mask (Tesseract expects black text on white background)
+            inverted = cv2.bitwise_not(combined_mask)
 
             # Upscale for better character recognition
-            final_image = cv2.resize(final_image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            upscaled = cv2.resize(inverted, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
 
-            # Denoise
+            # Denoise with morphological operations
             kernel = np.ones((2,2), np.uint8)
-            final_image = cv2.morphologyEx(final_image, cv2.MORPH_OPEN, kernel)
+            cleaned = cv2.morphologyEx(upscaled, cv2.MORPH_OPEN, kernel)
 
             # Run OCR
-            text = pytesseract.image_to_string(final_image, config=self.ocr_config)
+            text = pytesseract.image_to_string(cleaned, config=self.ocr_config_sparse)
             return text.strip()
 
         except Exception as e:
             print(f"Error extracting orange text: {e}")
             return ""
 
-    def preprocess_standard(self, image_path):
-        """Standard preprocessing for body text"""
+    def extract_standard_text(self, image_path):
+        """
+        Extract all text using standard grayscale preprocessing.
+        This works best for body text, descriptions, and general content.
+        """
         try:
             img = cv2.imread(str(image_path))
-            if img is None: return None
+            if img is None:
+                return ""
            
-            # Upscale
-            img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-           
-            # Grayscale & Threshold
+            # Convert to grayscale
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            
+            # Upscale for better recognition
+            gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+           
+            # Apply Otsu's thresholding for automatic threshold selection
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
            
-            return thresh
-        except Exception:
-            return None
+            # Run OCR
+            text = pytesseract.image_to_string(thresh, config=self.ocr_config)
+            return text.strip()
+
+        except Exception as e:
+            print(f"Error extracting standard text: {e}")
+            return ""
 
     def extract_text_from_image(self, image_path):
-        """Combine Orange extraction and Standard extraction"""
-       
-        # 1. Get Orange Text (High priority for Names)
+        """
+        Two-pass OCR approach:
+        1. Extract orange text (headers, character names)
+        2. Extract standard text (body content, skills, descriptions)
+        3. Combine with priority to orange text for character names
+        """
+        print(f"    Extracting text from: {image_path.name}")
+        
+        # Pass 1: Orange text (headers and character names)
         orange_text = self.extract_orange_text(image_path)
-       
-        # 2. Get Standard Text (For body content)
-        processed_img = self.preprocess_standard(image_path)
-        standard_text = ""
-        if processed_img is not None:
-            standard_text = pytesseract.image_to_string(processed_img, config=self.ocr_config)
-           
-        # Combine them
-        full_text = self.clean_ocr_text(orange_text + "\n" + standard_text)
-        return full_text
+        
+        # Pass 2: Standard grayscale (all text including body)
+        standard_text = self.extract_standard_text(image_path)
+        
+        # Combine results
+        # Orange text gets priority for character name extraction
+        combined_text = {
+            'orange': self.clean_ocr_text(orange_text),
+            'standard': self.clean_ocr_text(standard_text),
+            'full': self.clean_ocr_text(orange_text + "\n\n" + standard_text)
+        }
+        
+        return combined_text
 
     def clean_ocr_text(self, text):
-        """Clean and correct common OCR errors"""
-        if not text.strip():
+        """Clean and correct common OCR errors in Traditional Chinese"""
+        if not text or not text.strip():
             return ""
        
-        # Remove empty lines and excessive whitespace
+        # Remove excessive whitespace
         cleaned = re.sub(r'\s+', ' ', text).strip()
-       
-        # Basic corrections
+        
+        # Common OCR corrections for Traditional Chinese
         corrections = {
-            '技能1': '技能1', '技能l': '技能1',
-            '傷害': '傷害', '傷寮': '傷害',
+            # Number corrections
+            '技能1': '技能1', '技能l': '技能1', '技能i': '技能1',
+            '技能2': '技能2', '技能z': '技能2',
+            '技能3': '技能3',
+            '技能4': '技能4',
+            
+            # Common character corrections
+            '傷害': '傷害', '傷寮': '傷害', '傷書': '傷害',
+            '攻擊': '攻擊', '攻書': '攻擊',
+            '武將': '武將', '武書': '武將',
+            '敵人': '敵人', '敵入': '敵人',
+            
+            # Remove common OCR artifacts
+            '|': '', '\\': '', '_': '',
         }
+        
         for wrong, right in corrections.items():
             cleaned = cleaned.replace(wrong, right)
            
         return cleaned
 
-    def extract_character_name(self, text):
-        """Find character name in text"""
-        if not text: return None
+    def extract_character_name(self, text_dict):
+        """
+        Extract character name from OCR text.
+        Prioritizes orange text (where names usually appear).
+        """
+        # Try orange text first (most likely to contain character name)
+        orange_text = text_dict.get('orange', '')
+        if orange_text:
+            name = self._find_name_in_text(orange_text)
+            if name:
+                return name
+        
+        # Fallback to full text
+        full_text = text_dict.get('full', '')
+        if full_text:
+            name = self._find_name_in_text(full_text)
+            if name:
+                return name
+                
+        return None
+
+    def _find_name_in_text(self, text):
+        """Find character name using various patterns"""
+        if not text:
+            return None
        
-        # Look for the specific patterns seen in your screenshots
+        # Pattern 1: After specific keywords
         patterns = [
-            r'推薦書武將\s*([\u4e00-\u9fff]+)',   # Matches "Recommended General [Name]"
-            r'新武將\s*([\u4e00-\u9fff]+)',       # Matches "New General [Name]"
-            r'武將\s*([\u4e00-\u9fff]+)',         # Matches "General [Name]"
-            r'([\u4e00-\u9fff]{2,4})\s*\(',       # Matches "Name ("
+            r'推薦書武將[：:\s]*([\u4e00-\u9fff]{2,4})',     # Recommended General: [Name]
+            r'新武將[：:\s]*([\u4e00-\u9fff]{2,4})',         # New General: [Name]
+            r'武將[：:\s]*([\u4e00-\u9fff]{2,4})',           # General: [Name]
+            r'介紹[：:\s]*([\u4e00-\u9fff]{2,4})',           # Introduction: [Name]
+            r'([\u4e00-\u9fff]{2,4})\s*[（(]',              # Name (
+            r'^([\u4e00-\u9fff]{2,4})\s*$',                 # Just a name on its own line
         ]
        
         for pattern in patterns:
-            match = re.search(pattern, text)
+            match = re.search(pattern, text, re.MULTILINE)
             if match:
-                return match.group(1).strip()
+                name = match.group(1).strip()
+                # Validate: name should be 2-4 characters
+                if 2 <= len(name) <= 4:
+                    return name
        
-        # Fallback: Look for the first sequence of 2-4 Chinese chars
-        # specifically from the "Orange Text" part which usually comes first
-        match = re.search(r'^[\u4e00-\u9fff]{2,4}', text)
-        if match:
-            return match.group(0)
+        # Pattern 2: First sequence of 2-4 Chinese characters
+        # (Often appears at the start in orange text)
+        lines = text.split('\n')
+        for line in lines[:5]:  # Check first 5 lines
+            match = re.search(r'[\u4e00-\u9fff]{2,4}', line)
+            if match:
+                name = match.group(0)
+                # Avoid common false positives
+                if name not in ['新增', '改版', '武將', '推薦', '介紹', '技能', '皇帝']:
+                    return name
            
         return None
 
-    def generate_title_from_folder(self, folder_name, extracted_text):
-        """Generate title combining Folder English Name + OCR Chinese Name"""
-        # 1. Get English Base Name
+    def generate_title_from_folder(self, folder_name, text_dict):
+        """
+        Generate title combining folder English name + OCR Chinese name.
+        """
+        # Extract English name from folder
         clean_name = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name)
         clean_name = re.sub(r'Emperor-Rarity-', '', clean_name, flags=re.IGNORECASE)
         clean_name = re.sub(r'New-Character-', '', clean_name, flags=re.IGNORECASE)
         english_name = clean_name.replace('-', ' ').title()
        
-        # 2. Get Chinese Name
-        chinese_name = self.extract_character_name(extracted_text)
+        # Extract Chinese name from OCR
+        chinese_name = self.extract_character_name(text_dict)
        
+        # Generate title
         if chinese_name:
-            return f"新武將介紹 - {chinese_name} {english_name}"
+            return f"新武將介紹 - {chinese_name} ({english_name})"
         else:
             return f"新武將介紹 - {english_name}"
 
     def process_folder(self, folder_path):
+        """Process a single announcement folder"""
+        print(f"\n{'='*70}")
         print(f"Processing folder: {folder_path.name}")
+        print('='*70)
        
         images_path = folder_path / "images"
         readme_path = folder_path / "README.md"
        
-        # Find images
+        # Find all images
         image_files = sorted(list(images_path.glob("*.jpg")) +
                            list(images_path.glob("*.png")) +
                            list(images_path.glob("*.jpeg")))
        
         if not image_files:
+            print("  ⚠️  No images found")
             return False
            
-        # Extract text (Focus on first image for Title/Name)
-        print(f"  Extracting text...")
-        extracted_texts = []
-        for img_path in image_files[:3]:
-            text = self.extract_text_from_image(img_path)
-            if text:
-                extracted_texts.append(text)
-
-        all_text = "\n".join(extracted_texts)
-       
-        # Generate Metadata
-        title = self.generate_title_from_folder(folder_path.name, all_text)
-       
-        # Generate README
-        content = f"# {title}\n\n"
-        content += f"**Folder:** {folder_path.name}\n"
-        content += "\n## Announcement Images\n"
-        for img in image_files:
-            content += f"![Image](images/{img.name})\n"
-           
-        if all_text:
-            content += "\n## OCR Extracted Text\n"
-            content += "```\n" + all_text[:1000] + "\n```\n" # Limit length
-           
+        print(f"  Found {len(image_files)} images")
+        
+        # Extract text from first few images (character info usually in first images)
+        all_text_dicts = []
+        for i, img_path in enumerate(image_files[:3], 1):
+            print(f"  [{i}/{min(3, len(image_files))}] Processing {img_path.name}...")
+            text_dict = self.extract_text_from_image(img_path)
+            if text_dict and text_dict.get('full'):
+                all_text_dicts.append(text_dict)
+        
+        if not all_text_dicts:
+            print("  ⚠️  No text extracted from images")
+            return False
+        
+        # Combine all extracted text for README
+        combined_orange = '\n\n'.join([t['orange'] for t in all_text_dicts if t.get('orange')])
+        combined_standard = '\n\n'.join([t['standard'] for t in all_text_dicts if t.get('standard')])
+        
+        # Generate title (use first image's text for character name)
+        title = self.generate_title_from_folder(folder_path.name, all_text_dicts[0])
+        
+        print(f"  ✅ Generated title: {title}")
+        
+        # Generate README content
+        content = self._generate_readme_content(
+            title=title,
+            folder_name=folder_path.name,
+            image_files=image_files,
+            orange_text=combined_orange,
+            standard_text=combined_standard
+        )
+        
+        # Write README
         with open(readme_path, 'w', encoding='utf-8') as f:
             f.write(content)
            
-        print(f"  Generated README for {title}")
+        print(f"  ✅ Generated README: {readme_path}")
        
         # Save for main README update
         self.new_entries.append({
@@ -232,41 +317,124 @@ class KingdomStoryPhotoScanner:
        
         return True
 
+    def _generate_readme_content(self, title, folder_name, image_files, orange_text, standard_text):
+        """Generate README.md content"""
+        content = f"# {title}\n\n"
+        content += f"**Folder:** `{folder_name}`  \n"
+        content += f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        
+        content += "---\n\n"
+        content += "## 📷 Announcement Images\n\n"
+        
+        for img in image_files:
+            content += f"![{img.stem}](images/{img.name})\n\n"
+        
+        content += "---\n\n"
+        
+        # Show extracted text sections
+        if orange_text:
+            content += "## 🔶 Character Name & Headers (Orange Text)\n\n"
+            content += "```\n"
+            content += orange_text[:500]  # Limit length
+            if len(orange_text) > 500:
+                content += "\n... (truncated)"
+            content += "\n```\n\n"
+        
+        if standard_text:
+            content += "## 📝 Skills & Description (Body Text)\n\n"
+            content += "```\n"
+            content += standard_text[:1500]  # Limit length
+            if len(standard_text) > 1500:
+                content += "\n... (truncated)"
+            content += "\n```\n\n"
+        
+        content += "---\n\n"
+        content += "*Generated by Kingdom Story Photo Scanner*\n"
+        
+        return content
+
     def update_main_readme(self):
-        """Simple append to main README"""
-        if not self.new_entries: return
+        """Update main README.md with new entries"""
+        if not self.new_entries:
+            print("\nNo new entries to add to main README")
+            return
        
         readme_path = Path("README.md")
-        if not readme_path.exists(): return
+        if not readme_path.exists():
+            print("\n⚠️  Main README.md not found")
+            return
        
-        print(f"Updating main README with {len(self.new_entries)} entries...")
+        print(f"\n{'='*70}")
+        print(f"Updating main README with {len(self.new_entries)} new entries...")
+        print('='*70)
        
-        # Construct new lines
+        # Create new entry lines
         new_lines = []
         for entry in self.new_entries:
             line = f"- **{entry['date']}** - [{entry['title']}](announcements/{entry['folder']}/README.md)"
             new_lines.append(line)
+            print(f"  + {entry['title']}")
            
-        # Read and Update (Simple insertion after header)
+        # Read current README
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
            
-        # Insert after "Recent Announcements" if it exists
+        # Insert after "Recent Announcements" section
         if "### Recent Announcements" in content:
-            parts = content.split("### Recent Announcements")
-            # Keep header, insert new lines, keep rest
-            updated_content = parts[0] + "### Recent Announcements\n" + "\n".join(new_lines) + "\n" + parts[1]
+            parts = content.split("### Recent Announcements", 1)
+            
+            # Find where to insert (after the header, before next section or content)
+            after_header = parts[1]
+            
+            # Insert new lines at the top of the list
+            updated_content = (
+                parts[0] + 
+                "### Recent Announcements\n\n" + 
+                "\n".join(new_lines) + "\n" +
+                after_header
+            )
            
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(updated_content)
+                
+            print(f"  ✅ Main README updated successfully")
+        else:
+            print("  ⚠️  Could not find '### Recent Announcements' section")
 
     def run(self):
-        print("Starting Photo Scanner...")
+        """Main execution function"""
+        print("\n" + "="*70)
+        print("  Kingdom Story Photo Scanner - IMPROVED VERSION")
+        print("  Two-Pass OCR: Orange Headers + Standard Body Text")
+        print("="*70)
+        
+        # Find folders
         folders = self.find_announcement_folders()
-        for folder in folders:
-            self.process_folder(folder)
-        self.update_main_readme()
-        print("Done.")
+        
+        if not folders:
+            print("\n❌ No announcement folders found")
+            return
+        
+        print(f"\n✅ Found {len(folders)} announcement folders to process\n")
+        
+        # Process each folder
+        success_count = 0
+        for i, folder in enumerate(folders, 1):
+            print(f"\n[{i}/{len(folders)}]")
+            if self.process_folder(folder):
+                success_count += 1
+        
+        # Update main README
+        if self.new_entries:
+            self.update_main_readme()
+        
+        # Summary
+        print("\n" + "="*70)
+        print("  PROCESSING COMPLETE")
+        print("="*70)
+        print(f"  ✅ Successfully processed: {success_count}/{len(folders)} folders")
+        print(f"  📝 New entries added: {len(self.new_entries)}")
+        print("="*70 + "\n")
 
 if __name__ == "__main__":
     scanner = KingdomStoryPhotoScanner()
