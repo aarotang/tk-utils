@@ -117,35 +117,70 @@ class KingdomStoryPhotoScanner:
 
     def extract_text_from_image(self, image_path):
         """Extract text with improved preprocessing and error correction"""
+        # try:
+        #     processed_image = self.preprocess_image(image_path)
+            
+        #     if processed_image is None:
+        #         return ""
+            
+        #     # Try multiple OCR configurations and combine results
+        #     best_text = ""
+        #     max_chinese_chars = 0
+            
+        #     for config in self.ocr_configs:
+        #         text = pytesseract.image_to_string(processed_image, config=config)
+                
+        #         # Count Chinese characters
+        #         chinese_char_count = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
+                
+        #         # Keep the result with most Chinese characters
+        #         if chinese_char_count > max_chinese_chars:
+        #             max_chinese_chars = chinese_char_count
+        #             best_text = text
+            
+        #     # Clean and correct text
+        #     cleaned_text = self.clean_ocr_text(best_text)
+            
+        #     return cleaned_text
+        standard_text = self.extract_standard_grayscale(image_path)
+        orange_text = self.extract_orange_text(image_path)
+        combined_text = standard_text + "\n" + orange_text
+
+        return combined_text
+            
+        # except Exception as e:
+        #     print(f"Error extracting text from {image_path}: {e}")
+        #     return ""
+
+    def extract_orange_text(self, image_path):
+        """Specifically isolates Orange/Red text for OCR"""
         try:
-            processed_image = self.preprocess_image(image_path)
-            
-            if processed_image is None:
+            img = cv2.imread(str(image_path))
+            if img is None:
                 return ""
+
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            lower_red1 = np.array([0, 70, 50)
+            upper_red1 = np.array([25, 255, 255)
+
+            lower_red2 = np.array([160, 70, 50)
+            upper_red2 = np.array([180, 255, 255)
+
+            mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+            mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
             
-            # Try multiple OCR configurations and combine results
-            best_text = ""
-            max_chinese_chars = 0
+            combined_mask = cv2.bitwise_or(mask1, mask2)
+            final_image = cv2.bitwise_not(combined_mask)
+            final_image = cv2.resize(final_image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+
+            kernel = np.ones((2,2), np.uint8)
+            final_image = cv2.morphologyEx(final_image, cv2.MORPH_OPEN, kernel)
             
-            for config in self.ocr_configs:
-                text = pytesseract.image_to_string(processed_image, config=config)
-                
-                # Count Chinese characters
-                chinese_char_count = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
-                
-                # Keep the result with most Chinese characters
-                if chinese_char_count > max_chinese_chars:
-                    max_chinese_chars = chinese_char_count
-                    best_text = text
-            
-            # Clean and correct text
-            cleaned_text = self.clean_ocr_text(best_text)
-            
-            return cleaned_text
-            
-        except Exception as e:
-            print(f"Error extracting text from {image_path}: {e}")
-            return ""
+            # Run OCR
+            config = r'--oem 3 --psm 6 -l chi_tra'
+            text = pytessertact.image_to_string(final_image, config=config)
+
+            return text.strip()
 
     def clean_ocr_text(self, text):
         """Clean and correct common OCR errors"""
