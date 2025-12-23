@@ -415,6 +415,29 @@ class KingdomStoryPhotoScanner:
             print(f"      ⚠️  Using English name only (no valid Chinese name found)")
             return f"新武將介紹 - {english_name}"
 
+    
+    def extract_date_from_folder(self, folder_name):
+        """
+        Extract date from folder name.
+        Expected formats: YYYY-MM-DD-name or YYYY-MM-name
+        """
+        import re
+       
+        # Try YYYY-MM-DD format first
+        match = re.match(r'^(\d{4})-(\d{1,2})-(\d{1,2})', folder_name)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+       
+        # Try YYYY-MM format (assume day 01)
+        match = re.match(r'^(\d{4})-(\d{1,2})', folder_name)
+        if match:
+            year, month = match.groups()
+            return f"{year}-{month.zfill(2)}-01"
+       
+        # Fallback to current date if no pattern matches
+        return datetime.now().strftime("%Y-%m-%d")
+        
     def process_folder(self, folder_path):
         """Process a single announcement folder"""
         print(f"\n{'='*70}")
@@ -476,10 +499,11 @@ class KingdomStoryPhotoScanner:
             f.write(content)
        
         print(f"  ✅ Generated README: {readme_path}")
-       
+
+        folder_date = self.extrat_date_from_folder(folder_path.name)
         # Save for main README update
         self.new_entries.append({
-            'date': datetime.now().strftime("%Y-%m-%d"),
+            'date': folder_date,
             'title': title,
             'folder': folder_path.name
         })
