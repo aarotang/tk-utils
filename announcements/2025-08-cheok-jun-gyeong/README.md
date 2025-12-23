@@ -1,28 +1,29 @@
-# 新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)
-**Date:** Auguest 5, 2025  
-**Type:** New Character Release  
-**Event:** Darkness Warrior
+# 新武將介紹 - 介紹 2025 08 Cheok Jun Gyeong
+
+**Folder:** 2025-08-cheok-jun-gyeong
 
 ## Announcement Images
-![Main Announcement](images/01.jpg)
-![Character Introduction 2](images/02.jpg)
-![Character Introduction 3](images/03.jpg)
-![Character Introduction 4](images/04.jpg)
-![Character Introduction 5](images/05.jpg)
-![Character Introduction 6](images/06.jpg)
-![Character Introduction 7](images/07.jpg)
-![Character Introduction 8](images/08.jpg)
-![Character Introduction 9](images/09.jpg)
-![Character Introduction 10](images/10.jpg)
-![Character Introduction 11](images/11.jpg)
-![Character Introduction 12](images/12.jpg)
-![Character Introduction 13](images/13.jpg)
-![Character Introduction 14](images/14.jpg)
+![Image](images/00.jpg)
+![Image](images/01.jpg)
+![Image](images/02.jpg)
+![Image](images/03.jpg)
+![Image](images/04.jpg)
+![Image](images/05.jpg)
+![Image](images/06.jpg)
+![Image](images/07.jpg)
+![Image](images/08.jpg)
+![Image](images/09.jpg)
+![Image](images/10.jpg)
+![Image](images/11.jpg)
+![Image](images/12.jpg)
+![Image](images/13.jpg)
+![Image](images/14.jpg)
+![Image](images/528334883_1278077837662057_8056094483533173920_n.jpg)
+![Image](images/528481904_1203360848474084_5723608305655416187_n.jpg)
 
-## Summary
-- New character: 拓跋京 (Cheok Jun-gyeong)
-- Event type: Darkness Warrior
-- 技能1【迅猛突斬】 ：對全體敵軍造成闇傷害。 每名目標 5～10 秒嗜睡，受到 10 次攻擊後解除，傷害量的 100% 吸血。
-- 技能2【無瑕一斬】 ：嗜睡狀態的對象發動。 對全體敵人造成相當於其最大生命值 12.5%～25% 的比例傷害。
-- 技能3【忠義之牆】 ：當體力低於 50% 時發動。（發動一次） 自身 3.6 秒內元氣恢復 100% 0.6～3 秒不屈 0.6～3 秒動亂 動亂對象：對全體敵軍。
-- 技能4【先鋒之誓】 ：戰鬥開始時發動一次。 對最多 4 名敵軍造成閃屬性傷害。 每名目標 2～10 秒暈眩，受到 10 次攻擊後解除， 1.2～6 秒內降低元素抵抗 30%（最多疊加 2 層）。
+## OCR Extracted Text
+```
+4 還 。 傅 時 \ \人全 全 和 上 了 - 】 ! 二 、 ”/” 衣說 時誠二 ae 0 ) , 、 a . 。 品加 點 AN 計 開 昨 中 xw科 | Vs 生 咖 、 說 : ^ 東 世 吃、 俊 一0還 一 二 國說半 說 s( 人影 了 說當 《 ~ 2 晤
+是 點 噴 | 讓 點 ( 加 人二 和 7 # 有 和 光合導 主 弘 N 說 點 AMN na 一 還 字 各交 : 圖 、,記1 人 了襄 人全> 【 【 中 時 全人 陛 3 ~一一一 一一 4 店 k公 人 $ 全r凈 yy 人 . 的 人 4 和了 7 ww、了(天 一 三 之 累| 、 本補還 (+ 人 + 親愛的主公們好 ! 我是蔡玉地 八月的熱氣越來越高汪了呢 ! 今天我也帶牙好消息來與一址支持《三國萌萌打》的主公們見面嗎 、(e>u99 這次的更新, 我們準備了將加入三國萌萌打的新武將! 不僅如此, 大家期待已久的「攻略戰倍速戰鬥系統」也終於要登場了 ! 繼第一位活動武將「丰德」之後, 第二位活動武將「拓俊京」也即將現身 ! 準備好與弛一起消散炎府、享受涼災戰場了嗎 ? 那摩, 就讓我們一起來看看 8 月份的更新內容吧!t cx
+i>b 新起將介紹 [> 拘僅京 「活動量磺反將) 和 名 “還 1 了 全 / 和 說 上 說 了 時 > ~一 廁和 人 六軍 新武將介紹 .一拓俊京 (活動朝間鋒將) 同 人 說 品No 品 NMN 寢 人 , 上 多 、 人全 | 品 人 , I 多 人 『 AG 訪2 回 4# 影 本 , 二 S / / ~ 訟 襄交 人 和 條 語 隆 放 ~、,! (二 點 、 點 Na 險史 全 人 賓 。 入六 只 和 時 和 「先狂不是榮砍, 而是南任的重量。」 在無盡戰場的怒火中, 最先拔劍前行的人, 正是拓供京。 她以應不遲疑的決斷, 重整兩演的戰斷, 成為飼錢般堅定的先狂。 當所有人無法前進之時, 弛毅然衝鐘, 如峽電般負穿疝陣 拓供京的劍揮下之時, 不僅代是一擊, 而是局負頁任之人的的言, 她的刀鋒輕盈而銳利, 敵人在其前失去形體, 戰場亦為絕的軌跡所吞噬, 當她如盾牌般挺身而出, 戰友們重新站起, 彼此信念緊結之下, 得度向前衝鋒。 她說 : 「站在最前方的人, 決不會退卻。 我是那個握劍前行的人。 」
+```

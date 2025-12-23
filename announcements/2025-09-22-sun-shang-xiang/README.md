@@ -1,31 +1,24 @@
-# 新武將介紹 - Sun Shang Xiang (New Character Release)
-**Date:** September 22, 2025
-**Type:** New Character Release
-**Event:** Special Release
+# 新武將介紹 - 孫尚香 Sun Shang Xiang
+
+**Folder:** 2025-09-22-sun-shang-xiang
 
 ## Announcement Images
-![Main Announcement](images/01.jpg)
-![Character Introduction 2](images/02.jpg)
-![Character Introduction 3](images/03.jpg)
-![Character Introduction 4](images/04.jpg)
-![Character Introduction 5](images/05.jpg)
-![Character Introduction 6](images/06.jpg)
-![Character Introduction 7](images/07.jpg)
-![Character Introduction 8](images/08.jpg)
-![Character Introduction 9](images/09.jpg)
-![Character Introduction 10](images/10.jpg)
-![Character Introduction 11](images/11.jpg)
-![Character Introduction 12](images/12.jpg)
-![Character Introduction 13](images/13.jpg)
+![Image](images/01.jpg)
+![Image](images/02.jpg)
+![Image](images/03.jpg)
+![Image](images/04.jpg)
+![Image](images/05.jpg)
+![Image](images/06.jpg)
+![Image](images/07.jpg)
+![Image](images/08.jpg)
+![Image](images/09.jpg)
+![Image](images/10.jpg)
+![Image](images/11.jpg)
+![Image](images/12.jpg)
+![Image](images/13.jpg)
 
-## Summary
-New character release with unique abilities and skills.
-
-For detailed skill information, please refer to the announcement images above.
-
-## Notes
-- Images automatically detected and processed
-- For detailed information, please refer to the original announcement images above
-
----
-*Auto-generated on 2025-11-23 22:28:25*
+## OCR Extracted Text
+```
+1 生 一 外 。 4 y 【 生 昌語 和 人 | ' 仿 踢 二 命 昌 l | 襄 敬語 7和 ! 仿仔 【 【 AN : 圖 十 2 | , 說 一二人 廚 共計 | 還 9 人 點 太 念、、 馬 一 4 4 ww , G 人 和sw 條 一 2 2 | ;講 一 表 親要的主公們大家好 ! 我是蔡下窟 侈 清爽的秋風徐徐吹來, 我帶著好消息來與各位見面啦 ! 在這次更新中-一 將有一位新的火焰點亮戰場, 全新的武將 孫尚香 即將加入《三國萌萌打》吉場! 4 而且, 許多主公們期待已久的特殊造型當駐販售功能, 也會同時開放喔! 開~ 準備好迎接孫尚香的英勇活躍, 並享受更加多彩的戰鬥了嘩? 乜 有 那麼,就讓我們立刻去看看九月的更新內容吧! 放夢
+>選新婦改際武將 > 重帶誰推諜和書組 交尚益 (站典机說) 說 了站 s 還生 ie 1 * 剛玉謊人 崗 加 于 著 中 由 am , 5 3 蟬 : 3 「 【 。 Vs 讓 0 讓 了 , 二3 - 寄 同 晤 哆 【 【 0 Aa 謹 AN 字 4 人 則 品讓蟬 本 了 ,4 和 . 1吃 Su 說 丈夫 說人 、 同 計 , 上廬er二.。 卻 2 9) 7還 2 隊W 衝及名 人 用 he % 名 和 w 是 客 斷 “、 人4 人4 呈 、‧ss +. 全人人 點 由 同 區有人所 4 閉 人 說 上 ”"儿 愉選新增改版武將 局 旦帝的推鷹書級 孫尚盂 (自炎勇將) [全 則 擴 還和 人 2 , 際虹 說人 人 計“ 一 關 一 則 全 | 讓 和 4 凋 Ns | 7 N 4 和 說國WNNNNYN」 , so 劑 全 人還誠 | 讓 呈X 人 人 人 人 葛2, 轉計 2 See , , 了 時 . | /y9 急 M 和 了 , AN 時 <對我而言, 勝利是理所當然的。那正是孫家血脈所承靈的重量。> 跨國最高的名門-一孫家出身的孫尚香, 並不只是家族的繼承人。 她沒有因血統而自滿, 而是以自己的估頭與烈焰撼動戰場的真正勇將。 孫尚香的斧頭如火焰般辟開敵陣, 她的氣勢熊熊煥燒, 重新喚起了同伴們的士氣 肩負著孫家多年積累的榮繼與買任, 她總是在戰場上化作火焰開關前路。 她加入戰場的悸一刻, 展開的不是單純的武勇傳說, 而是將延貫不斷烈焰的史詩篇章。 「吳國的火焰永不煌滅。」 現在, 就
+```

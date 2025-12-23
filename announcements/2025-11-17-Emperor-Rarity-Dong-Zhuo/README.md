@@ -1,34 +1,29 @@
-# Emperor Rarity Dong Zhuo
-**Date:** November 17, 2025
-**Type:** Unknown - Requires Manual Review
+# 新武將介紹 - 董卓 Dong Zhuo
+
+**Folder:** 2025-11-17-Emperor-Rarity-Dong-Zhuo
 
 ## Announcement Images
-![Announcement Image 1](images/01.jpg)
-![Announcement Image 2](images/02.jpg)
-![Announcement Image 3](images/03.jpg)
-![Announcement Image 4](images/04.jpg)
-![Announcement Image 5](images/05.jpg)
-![Announcement Image 6](images/06.jpg)
-![Announcement Image 7](images/07.jpg)
-![Announcement Image 8](images/08.jpg)
-![Announcement Image 9](images/09.jpg)
-![Announcement Image 10](images/10.jpg)
-![Announcement Image 11](images/11.jpg)
-![Announcement Image 12](images/12.jpg)
-![Announcement Image 13](images/13.jpg)
-![Announcement Image 14](images/14.jpg)
-![Announcement Image 15](images/15.jpg)
-![Announcement Image 16](images/16.jpg)
-![Announcement Image 17](images/17.jpg)
+![Image](images/01.jpg)
+![Image](images/02.jpg)
+![Image](images/03.jpg)
+![Image](images/04.jpg)
+![Image](images/05.jpg)
+![Image](images/06.jpg)
+![Image](images/07.jpg)
+![Image](images/08.jpg)
+![Image](images/09.jpg)
+![Image](images/10.jpg)
+![Image](images/11.jpg)
+![Image](images/12.jpg)
+![Image](images/13.jpg)
+![Image](images/14.jpg)
+![Image](images/15.jpg)
+![Image](images/16.jpg)
+![Image](images/17.jpg)
 
-## Summary
-General game announcement with important updates and information.
-
-Please refer to the announcement images above for detailed information.
-
-## Notes
-- Images automatically detected and processed
-- For detailed information, please refer to the original announcement images above
-
----
-*Auto-generated on 2025-11-23 22:28:38*
+## OCR Extracted Text
+```
+沁2 峇二 y 、 CA 及 全 廚 S 作 ha 舟 , 時 同 加放 4 必 | 安享受這疇後秩夜的氣息吧一六 【 -.縛語 全 , ~ ) ) 評 區-\ M Caw二 全加 、 - 仿 4 ve 一2 和 了二1 ~ 加1 記 Li,全《辣 首 影 只 人 人) 人 3 還 | 》 矣光 當 ~ 計 人 安享受這最後秋夜的氣息吧~之 今天要向主公們帶來的消息有:新增改版武將董卓, 以及平角、靈物、寶物等多項內容的改版與更新 ! 未來, 《歡樂魂轉吳》將持續努力, 為主公們帶來更加刺激與十富的戰鬥體驗, 請主公們多多期待接下來的更新內容! 感謝您的支持! 一一慕焉敬上 克
+必 新給時門靈詳系坊 Le 一 蘆便修正 新增戰鬥加速系統 以下內容新增了戰鬥加速功能 攻擊際 - 姐己攻擊際 - 由尤攻擊隊 - 活動妲己攻擊際 - 活動當尤攻擊際 -公會世界群雄:唔落的和范堆 -公會世界群雄:絕望的虞姬 - 公會世界群雄:被吞噬的項乙 其他修正 - 嘉信技能相關修改:吉信的四個技能增加了傷害與貫說效果, 並修正了在「疾風」 狀態下能命中「詛 暫」 的錯誤。 - 還動員戰相關修改:修正了在「總動員戰」 中(查看我的防當生除資訊』 按鈕無法正常運作的問題, -公會世界群雄相關修改: 修正了在已有參與記錄的情況下, 退出公會後重新加入時, 公會世界群雄的 參與次數會被重咋的問題。 -公會戰賽季特別獎勵相關修改: 過去需要「公會積分達5000分以上」且「(「公會戰中稅金應用後獲得200個以上龍的印竟」 才能取得賽季 特別獎勵。 現在只需「公會積分達5000分以上」, 且以 「稅金應用前」為基準獲得200個以上能的印意, 即可獲得 公會戰的賽季特別獎勵。 -仙人交換相關修正: 修正了在仙人保管枷位已滿的狀態下, 於商店購買仙人後, 仍可在保管欄位中以 證物進行交換的錯誤,
+放流它克版 法次改版 新增多款法寶。 青爛 (5星) :體力 +15一25% 如意棒 (5旺) :攻擊力 +10一18% 天命金書 (5星) :傷害減少 +5一10% 早桃 (5星) :所有武將回避率 +4一8% 赤炎珠 (5旺) :幸運 +2一4 ※ 法寶積分已副除, 無諭法寶等級如何, 所有插槽均可裝備任意法寶, 君主的內政技能中關於法寶管理的技能已被副除。 法寶分解改版 變更前: 分解法寶時可獲得亂物考藥
+```
