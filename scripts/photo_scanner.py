@@ -21,7 +21,12 @@ class KingdomStoryPhotoScanner:
         self.processed_folders = set()
         
         # OCR configuration for better Chinese text recognition
-        self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
+        # self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
+        self.ocr_configs = [
+            r'--oem 3 --psm 3 -l chi_tra+chi_sim',  # Try both traditional and simplified
+            r'--oem 3 --psm 4 -l chi_tra',  # Single column of text
+            r'--oem 3 --psm 6 -l chi_tra',  # Uniform block
+        ]
         
         # Common OCR error patterns and corrections
         self.text_corrections = {
@@ -65,20 +70,25 @@ class KingdomStoryPhotoScanner:
     def preprocess_image(self, image_path):
         """Enhanced image preprocessing for better OCR results"""
         try:
-            # Load with PIL for better handling
+            # Load image
             pil_image = Image.open(image_path)
             
-            # Convert to RGB if needed
+            # Convert to RGB
             if pil_image.mode != 'RGB':
                 pil_image = pil_image.convert('RGB')
             
-            # Enhance contrast and sharpness
-            enhancer = ImageEnhance.Contrast(pil_image)
-            pil_image = enhancer.enhance(1.2)
+            # # Enhance contrast and sharpness
+            # enhancer = ImageEnhance.Contrast(pil_image)
+            # pil_image = enhancer.enhance(1.2)
             
-            enhancer = ImageEnhance.Sharpness(pil_image)
-            pil_image = enhancer.enhance(1.1)
-            
+            # enhancer = ImageEnhance.Sharpness(pil_image)
+            # pil_image = enhancer.enhance(1.1)
+
+            # Increase image size for better OCR (Chinese characters need more resolution)
+            width, height = pil_image.size
+            scale_factor = 2.0  # Increase this if needed
+            pil_image = pil_image.resize((int(width * scale_factor), int(height * scale_factor)), Image.LANCZOS)
+        
             # Convert to OpenCV format
             import numpy as np
             cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
@@ -86,13 +96,17 @@ class KingdomStoryPhotoScanner:
             # Convert to grayscale
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
             
-            # Apply adaptive thresholding for better text recognition
-            processed = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            # Apply bilateral filter to reduce noise while keeping edges sharp
+            denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+            
+            # Apply adaptive thresholding
+            thresh = cv2.adaptiveThreshold(
+                denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 3
             )
             
-            # Noise reduction
-            processed = cv2.medianBlur(processed, 3)
+            # Optional: Apply morphological operations to connect broken characters
+            kernel = np.ones((2, 2), np.uint8)
+            processed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
             
             return processed
             
@@ -109,11 +123,23 @@ class KingdomStoryPhotoScanner:
             if processed_image is None:
                 return ""
             
-            # Extract text with multiple attempts
-            text = pytesseract.image_to_string(processed_image, config=self.ocr_config)
+            # Try multiple OCR configurations and combine results
+            best_text = ""
+            max_chinese_chars = 0
+            
+            for config in self.ocr_configs:
+                text = pytesseract.image_to_string(processed_image, config=config)
+                
+                # Count Chinese characters
+                chinese_char_count = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
+                
+                # Keep the result with most Chinese characters
+                if chinese_char_count > max_chinese_chars:
+                    max_chinese_chars = chinese_char_count
+                    best_text = text
             
             # Clean and correct text
-            cleaned_text = self.clean_ocr_text(text)
+            cleaned_text = self.clean_ocr_text(best_text)
             
             return cleaned_text
             
@@ -152,6 +178,41 @@ class KingdomStoryPhotoScanner:
                 filtered_lines.append(line)
         
         return '\n'.join(filtered_lines[:15])  # Limit to first 15 clean lines
+
+    def extract_character_name(self, text, folder_name):
+        """Extract character name from OCR text, prioritizing Chinese"""
+        if not text:
+            return None
+        
+        # Look for common patterns in Chinese announcements
+        patterns = [
+            r'新武將[：:]\s*([^\s\n]{2,4})',  # New character: NAME
+            r'武將介紹[：:]\s*([^\s\n]{2,4})',  # Character introduction: NAME
+            r'([^\s\n]{2,4})\s*新武將',  # NAME new character
+            r'角色[：:]\s*([^\s\n]{2,4})',  # Character: NAME
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                name = match.group(1).strip()
+                # Verify it's mostly Chinese characters
+                chinese_chars = len([c for c in name if '\u4e00' <= c <= '\u9fff'])
+                if chinese_chars >= len(name) * 0.5:  # At least 50% Chinese
+                    return name
+        
+        # If no pattern match, look for any 2-4 character Chinese sequence at the start
+        lines = text.split('\n')
+        for line in lines[:5]:  # Check first 5 lines
+            # Find Chinese character sequences
+            chinese_sequences = re.findall(r'[\u4e00-\u9fff]{2,4}', line)
+            if chinese_sequences:
+                # Return the first substantial Chinese sequence
+                for seq in chinese_sequences:
+                    if len(seq) >= 2:
+                        return seq
+        
+        return None
 
     def determine_announcement_type(self, folder_name, extracted_text):
         """Determine the type of announcement based on folder name and content"""
@@ -283,42 +344,35 @@ class KingdomStoryPhotoScanner:
 
     def generate_title_from_folder(self, folder_name, announcement_type, extracted_text):
         """Generate a proper title from folder name and content"""
-        # Remove date prefix from folder name
+        # Remove date prefix
         clean_name = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name)
         clean_name = re.sub(r'^\d{4}-\d{1,2}-?', '', clean_name)
         
-        # Replace hyphens with spaces and title case
+        # Title case the folder name
         title_base = clean_name.replace('-', ' ').replace('_', ' ').title()
         
-        # Try to extract character name from text for character releases
+        # Extract Chinese character name from OCR text
+        chinese_name = self.extract_character_name(extracted_text, folder_name)
+        
         if announcement_type == "New Character Release":
-            # Look for character name patterns in Chinese
-            char_match = re.search(r'新武將[：:]\s*([^\s\n]+)', extracted_text)
-            if char_match:
-                char_name = char_match.group(1)
-                return f"新武將介紹 - {char_name} (New Character - {title_base})"
-            elif 'cheok' in folder_name.lower() or 'jun' in folder_name.lower():
-                return f"新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)"
+            if chinese_name:
+                # Use the extracted Chinese name
+                return f"新武將介紹 - {chinese_name} (New Character - {title_base})"
             else:
+                # Fallback to folder-based name
                 return f"新武將介紹 - {title_base} (New Character Release)"
         
         elif announcement_type == "Balance Update":
-            # Look for version number or specific update type
             if 'warrior' in folder_name.lower() and 'class' in folder_name.lower():
-                return "Warrior Class Rework (戰士職業重做)"
-            elif 'rework' in folder_name.lower():
-                return f"{title_base} Rework ({title_base}重做)"
+                return "戰士職業重做 (Warrior Class Rework)"
+            elif chinese_name:
+                return f"{chinese_name} 平衡更新 (Balance Update - {title_base})"
             else:
-                # Look for version number
-                version_match = re.search(r'(\d+[a-z]?)', title_base)
-                if version_match:
-                    version = version_match.group(1)
-                    return f"Balance Update - {version} (平衡更新 - {version})"
-                else:
-                    return f"Balance Update - {title_base} (平衡更新)"
+                return f"平衡更新 - {title_base} (Balance Update)"
         
         else:
             return title_base
+            
 
     def extract_skills_from_text(self, text):
         """Extract skill information from OCR text - improved version"""
