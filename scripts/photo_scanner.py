@@ -1,51 +1,30 @@
 #!/usr/bin/env python3
 """
-Enhanced Kingdom Story Photo Scanner
-Processes announcement images and generates well-formatted README files
+Kingdom Story Photo Scanner
+Features:
+- Orange Text Extraction (HSV Masking) for Character Names
+- Standard Grayscale Preprocessing for Body Text
+- Auto-generation of README files
 """
 
 import os
 import re
 import cv2
+import numpy as np
 import glob
-import json
 from datetime import datetime
 from pathlib import Path
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image
 import pytesseract
 
 class KingdomStoryPhotoScanner:
     def __init__(self):
         self.announcement_dirs = []
         self.new_entries = []
-        self.processed_folders = set()
-        
-        # OCR configuration for better Chinese text recognition
-        # self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
-        self.ocr_configs = [
-            r'--oem 3 --psm 3 -l chi_tra+chi_sim',  # Try both traditional and simplified
-            r'--oem 3 --psm 4 -l chi_tra',  # Single column of text
-            r'--oem 3 --psm 6 -l chi_tra',  # Uniform block
-        ]
-        
-        # Common OCR error patterns and corrections
-        self.text_corrections = {
-            # Common OCR misreads for Chinese characters
-            '技能1': ['技能1', '技能 1', '技能I', '技能l'],
-            '技能2': ['技能2', '技能 2', '技能II', '技能ll'],
-            '技能3': ['技能3', '技能 3', '技能III', '技能lll'],
-            '技能4': ['技能4', '技能 4', '技能IV', '技能lV'],
-            '傷害': ['傷害', '伤害', '傷寮', '伤寮'],
-            '攻擊': ['攻擊', '攻击', '攻撃'],
-            '對象': ['對象', '对象', '對像'],
-            '秒': ['秒', '妙', 'ネ少'],
-            '造成': ['造成', '道成'],
-            '發動': ['發動', '发动', '發勤'],
-            '獲得': ['獲得', '获得', '獲徳'],
-            '增加': ['增加', '堌加'],
-            '減少': ['減少', '减少'],
-            '%': ['%', '％', '% ', ' %'],
-        }
+       
+        # OCR Configuration
+        # --psm 6: Assume a single uniform block of text
+        self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
 
     def find_announcement_folders(self):
         """Find all announcement folders with images"""
@@ -53,7 +32,7 @@ class KingdomStoryPhotoScanner:
         if not announcements_path.exists():
             print("No announcements directory found")
             return []
-        
+       
         folders = []
         for folder in announcements_path.iterdir():
             if folder.is_dir() and not folder.name.startswith('.'):
@@ -64,794 +43,230 @@ class KingdomStoryPhotoScanner:
                                  list(images_path.glob("*.jpeg"))
                     if image_files:
                         folders.append(folder)
-        
+       
         return sorted(folders)
 
-    def preprocess_image(self, image_path):
-        """Enhanced image preprocessing for better OCR results"""
-        try:
-            # Load image
-            pil_image = Image.open(image_path)
-            
-            # Convert to RGB
-            if pil_image.mode != 'RGB':
-                pil_image = pil_image.convert('RGB')
-            
-            # # Enhance contrast and sharpness
-            # enhancer = ImageEnhance.Contrast(pil_image)
-            # pil_image = enhancer.enhance(1.2)
-            
-            # enhancer = ImageEnhance.Sharpness(pil_image)
-            # pil_image = enhancer.enhance(1.1)
-
-            # Increase image size for better OCR (Chinese characters need more resolution)
-            width, height = pil_image.size
-            scale_factor = 2.0  # Increase this if needed
-            pil_image = pil_image.resize((int(width * scale_factor), int(height * scale_factor)), Image.LANCZOS)
-        
-            # Convert to OpenCV format
-            import numpy as np
-            cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-            
-            # Convert to grayscale
-            gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-            
-            # Apply bilateral filter to reduce noise while keeping edges sharp
-            denoised = cv2.bilateralFilter(gray, 9, 75, 75)
-            
-            # Apply adaptive thresholding
-            thresh = cv2.adaptiveThreshold(
-                denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 3
-            )
-            
-            # Optional: Apply morphological operations to connect broken characters
-            kernel = np.ones((2, 2), np.uint8)
-            processed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-            
-            return processed
-            
-        except Exception as e:
-            print(f"Error preprocessing {image_path}: {e}")
-            # Fallback to original image
-            return cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-
-    def extract_text_from_image(self, image_path):
-        """Extract text with improved preprocessing and error correction"""
-        # try:
-        #     processed_image = self.preprocess_image(image_path)
-            
-        #     if processed_image is None:
-        #         return ""
-            
-        #     # Try multiple OCR configurations and combine results
-        #     best_text = ""
-        #     max_chinese_chars = 0
-            
-        #     for config in self.ocr_configs:
-        #         text = pytesseract.image_to_string(processed_image, config=config)
-                
-        #         # Count Chinese characters
-        #         chinese_char_count = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
-                
-        #         # Keep the result with most Chinese characters
-        #         if chinese_char_count > max_chinese_chars:
-        #             max_chinese_chars = chinese_char_count
-        #             best_text = text
-            
-        #     # Clean and correct text
-        #     cleaned_text = self.clean_ocr_text(best_text)
-            
-        #     return cleaned_text
-        standard_text = self.extract_standard_grayscale(image_path)
-        orange_text = self.extract_orange_text(image_path)
-        combined_text = standard_text + "\n" + orange_text
-
-        return combined_text
-            
-        # except Exception as e:
-        #     print(f"Error extracting text from {image_path}: {e}")
-        #     return ""
-
     def extract_orange_text(self, image_path):
-        """Specifically isolates Orange/Red text for OCR"""
+        """
+        Specifically isolates Orange/Red text for OCR (e.g., Character Names).
+        """
         try:
+            # Load Image
             img = cv2.imread(str(image_path))
             if img is None:
                 return ""
 
+            # Convert to HSV
             hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+            # Define Orange/Red Ranges (0-25 and 160-180)
             lower_red1 = np.array([0, 70, 50])
             upper_red1 = np.array([25, 255, 255])
-
             lower_red2 = np.array([160, 70, 50])
             upper_red2 = np.array([180, 255, 255])
 
+            # Create Masks
             mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
             mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-            
             combined_mask = cv2.bitwise_or(mask1, mask2)
+
+            # Invert for Tesseract (Black text on White background)
             final_image = cv2.bitwise_not(combined_mask)
+
+            # Upscale for better character recognition
             final_image = cv2.resize(final_image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
 
+            # Denoise
             kernel = np.ones((2,2), np.uint8)
             final_image = cv2.morphologyEx(final_image, cv2.MORPH_OPEN, kernel)
-            
-            # Run OCR
-            config = r'--oem 3 --psm 6 -l chi_tra'
-            text = pytessertact.image_to_string(final_image, config=config)
 
+            # Run OCR
+            text = pytesseract.image_to_string(final_image, config=self.ocr_config)
             return text.strip()
+
+        except Exception as e:
+            print(f"Error extracting orange text: {e}")
+            return ""
+
+    def preprocess_standard(self, image_path):
+        """Standard preprocessing for body text"""
+        try:
+            img = cv2.imread(str(image_path))
+            if img is None: return None
+           
+            # Upscale
+            img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+           
+            # Grayscale & Threshold
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+           
+            return thresh
+        except Exception:
+            return None
+
+    def extract_text_from_image(self, image_path):
+        """Combine Orange extraction and Standard extraction"""
+       
+        # 1. Get Orange Text (High priority for Names)
+        orange_text = self.extract_orange_text(image_path)
+       
+        # 2. Get Standard Text (For body content)
+        processed_img = self.preprocess_standard(image_path)
+        standard_text = ""
+        if processed_img is not None:
+            standard_text = pytesseract.image_to_string(processed_img, config=self.ocr_config)
+           
+        # Combine them
+        full_text = self.clean_ocr_text(orange_text + "\n" + standard_text)
+        return full_text
 
     def clean_ocr_text(self, text):
         """Clean and correct common OCR errors"""
         if not text.strip():
             return ""
-        
-        # Basic cleaning
-        cleaned = text.strip()
-        
-        # Remove excessive whitespace
-        cleaned = re.sub(r'\s+', ' ', cleaned)
-        cleaned = re.sub(r'\n\s*\n', '\n', cleaned)  # Remove empty lines
-        
-        # Fix common OCR errors
-        for correct, variations in self.text_corrections.items():
-            for variation in variations:
-                cleaned = cleaned.replace(variation, correct)
-        
-        # Remove lines that are mostly garbage (too many special characters)
-        lines = cleaned.split('\n')
-        filtered_lines = []
-        for line in lines:
-            line = line.strip()
-            if len(line) < 3:  # Skip very short lines
-                continue
-            # Count special characters vs letters/Chinese characters
-            special_chars = len(re.findall(r'[^\w\s\u4e00-\u9fff]', line))
-            total_chars = len(line)
-            if total_chars > 0 and special_chars / total_chars < 0.5:  # Less than 50% special chars
-                filtered_lines.append(line)
-        
-        return '\n'.join(filtered_lines[:15])  # Limit to first 15 clean lines
+       
+        # Remove empty lines and excessive whitespace
+        cleaned = re.sub(r'\s+', ' ', text).strip()
+       
+        # Basic corrections
+        corrections = {
+            '技能1': '技能1', '技能l': '技能1',
+            '傷害': '傷害', '傷寮': '傷害',
+        }
+        for wrong, right in corrections.items():
+            cleaned = cleaned.replace(wrong, right)
+           
+        return cleaned
 
-    def extract_character_name(self, text, folder_name):
-        """Extract character name from OCR text, prioritizing Chinese"""
-        if not text:
-            return None
-        
-        # Look for common patterns in Chinese announcements
+    def extract_character_name(self, text):
+        """Find character name in text"""
+        if not text: return None
+       
+        # Look for the specific patterns seen in your screenshots
         patterns = [
-            r'新武將[：:]\s*([^\s\n]{2,4})',  # New character: NAME
-            r'武將介紹[：:]\s*([^\s\n]{2,4})',  # Character introduction: NAME
-            r'([^\s\n]{2,4})\s*新武將',  # NAME new character
-            r'角色[：:]\s*([^\s\n]{2,4})',  # Character: NAME
+            r'推薦書武將\s*([\u4e00-\u9fff]+)',   # Matches "Recommended General [Name]"
+            r'新武將\s*([\u4e00-\u9fff]+)',       # Matches "New General [Name]"
+            r'武將\s*([\u4e00-\u9fff]+)',         # Matches "General [Name]"
+            r'([\u4e00-\u9fff]{2,4})\s*\(',       # Matches "Name ("
         ]
-        
+       
         for pattern in patterns:
             match = re.search(pattern, text)
             if match:
-                name = match.group(1).strip()
-                # Verify it's mostly Chinese characters
-                chinese_chars = len([c for c in name if '\u4e00' <= c <= '\u9fff'])
-                if chinese_chars >= len(name) * 0.5:  # At least 50% Chinese
-                    return name
-        
-        # If no pattern match, look for any 2-4 character Chinese sequence at the start
-        lines = text.split('\n')
-        for line in lines[:5]:  # Check first 5 lines
-            # Find Chinese character sequences
-            chinese_sequences = re.findall(r'[\u4e00-\u9fff]{2,4}', line)
-            if chinese_sequences:
-                # Return the first substantial Chinese sequence
-                for seq in chinese_sequences:
-                    if len(seq) >= 2:
-                        return seq
-        
+                return match.group(1).strip()
+       
+        # Fallback: Look for the first sequence of 2-4 Chinese chars
+        # specifically from the "Orange Text" part which usually comes first
+        match = re.search(r'^[\u4e00-\u9fff]{2,4}', text)
+        if match:
+            return match.group(0)
+           
         return None
 
-    def determine_announcement_type(self, folder_name, extracted_text):
-        """Determine the type of announcement based on folder name and content"""
-
-        # Initialize scores
-        character_score = 0
-        balance_score = 0  
-        event_score = 0
-        
-        # Remove date prefix from folder name for analysis
-        clean_folder = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name.lower())
-        text_lower = extracted_text.lower() if extracted_text else ""
-        
-        # FOLDER NAME SCORING (higher weight = 3 points)
-        character_folder_keywords = [
-            'new', 'character', 'hero', 'cheok', 'jun', 'sun', 'shang', 'xiang',
-            '武將', 'hero', 'warrior-new', 'introduction'
-        ]
-        
-        balance_folder_keywords = [
-            'balance', 'rework', 'update', 'warrior-class', 'class', 
-            '平衡', '更新', 'modification', 'adjustment', 'nerf', 'buff'
-        ]
-        
-        event_folder_keywords = [
-            'event', '活動', '限時', 'limited', 'special', 'celebration'
-        ]
-
-        # Score folder name keywords
-        for keyword in character_folder_keywords:
-            if keyword in clean_folder:
-                character_score += 3
-                
-        for keyword in balance_folder_keywords:
-            if keyword in clean_folder:
-                balance_score += 3
-                
-        for keyword in event_folder_keywords:
-            if keyword in clean_folder:
-                event_score += 3
-        
-        # OCR TEXT SCORING (moderate weight = 2 points)
-        character_text_keywords = [
-            '新武將', '武將介紹', 'new character', '角色', '職業介紹',
-            'character introduction', '新增角色', 'hero introduction'
-        ]
-        
-        balance_text_keywords = [
-            '平衡更新', 'balance update', '技能修改', 'skill modification',
-            '技能1', '技能2', '技能3', '技能4', 'rework', '重做'
-        ]
-        
-        event_text_keywords = [
-            '活動', 'event', '限時', 'limited time', '特別', 'special event'
-        ]
-
-        # Score OCR text keywords
-        for keyword in character_text_keywords:
-            if keyword in text_lower:
-                character_score += 2
-                
-        for keyword in balance_text_keywords:
-            if keyword in text_lower:
-                balance_score += 2
-                
-        for keyword in event_text_keywords:
-            if keyword in text_lower:
-                event_score += 2
-        
-        # SPECIAL PATTERNS (bonus points)
-        # Character names pattern bonus
-        if re.search(r'(cheok|jun|sun|shang|xiang|zhang|zhao|liu|cao)', clean_folder):
-            character_score += 2
-            
-        # Version number pattern suggests balance update
-        if re.search(r'v?\d+[a-z]?|version', clean_folder):
-            balance_score += 2
-            
-        # Multiple skills mentioned suggests balance update
-        skill_mentions = len(re.findall(r'技能[1-4]', text_lower))
-        if skill_mentions >= 3:
-            balance_score += 2
-        elif skill_mentions >= 1:
-            # Single skill mention could be character introduction
-            character_score += 1
-
-        # CLASSIFICATION LOGIC
-        min_threshold = 3
-        scores = {
-            'New Character Release': character_score,
-            'Balance Update': balance_score,
-            'Event Announcement': event_score
-        }
-        
-        # Find highest scoring type
-        max_score = max(scores.values())
-        max_types = [type_name for type_name, score in scores.items() if score == max_score]
-        
-        # If highest score meets threshold
-        if max_score >= min_threshold:
-            # If tied, use priority: Character > Balance > Event
-            if 'New Character Release' in max_types:
-                return 'New Character Release'
-            elif 'Balance Update' in max_types:
-                return 'Balance Update'
-            else:
-                return 'Event Announcement'
-        
-        # If no type meets threshold, return unknown
-        return 'Unknown - Requires Manual Review'   
-
-
-    def extract_date_from_folder(self, folder_name):
-        """Extract date from folder name and format it properly"""
-        # Try to find date pattern like 2025-08-13
-        date_match = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})', folder_name)
-        if date_match:
-            year, month, day = date_match.groups()
-            return datetime(int(year), int(month), int(day)).strftime("%B %d, %Y")
-        
-        # Try to find year-month pattern like 2025-08
-        date_match = re.search(r'(\d{4})-(\d{1,2})', folder_name)
-        if date_match:
-            year, month = date_match.groups()
-            return datetime(int(year), int(month), 1).strftime("%B %Y")
-        
-        # Default to current date
-        return datetime.now().strftime("%B %d, %Y")
-
-    def generate_title_from_folder(self, folder_name, announcement_type, extracted_text):
-        """Generate a proper title from folder name and content"""
-        # Remove date prefix
+    def generate_title_from_folder(self, folder_name, extracted_text):
+        """Generate title combining Folder English Name + OCR Chinese Name"""
+        # 1. Get English Base Name
         clean_name = re.sub(r'^\d{4}-\d{1,2}-\d{1,2}-?', '', folder_name)
-        clean_name = re.sub(r'^\d{4}-\d{1,2}-?', '', clean_name)
-        
-        # Title case the folder name
-        title_base = clean_name.replace('-', ' ').replace('_', ' ').title()
-        
-        # Extract Chinese character name from OCR text
-        chinese_name = self.extract_character_name(extracted_text, folder_name)
-        
-        if announcement_type == "New Character Release":
-            if chinese_name:
-                # Use the extracted Chinese name
-                return f"新武將介紹 - {chinese_name} (New Character - {title_base})"
-            else:
-                # Fallback to folder-based name
-                return f"新武將介紹 - {title_base} (New Character Release)"
-        
-        elif announcement_type == "Balance Update":
-            if 'warrior' in folder_name.lower() and 'class' in folder_name.lower():
-                return "戰士職業重做 (Warrior Class Rework)"
-            elif chinese_name:
-                return f"{chinese_name} 平衡更新 (Balance Update - {title_base})"
-            else:
-                return f"平衡更新 - {title_base} (Balance Update)"
-        
+        clean_name = re.sub(r'Emperor-Rarity-', '', clean_name, flags=re.IGNORECASE)
+        clean_name = re.sub(r'New-Character-', '', clean_name, flags=re.IGNORECASE)
+        english_name = clean_name.replace('-', ' ').title()
+       
+        # 2. Get Chinese Name
+        chinese_name = self.extract_character_name(extracted_text)
+       
+        if chinese_name:
+            return f"新武將介紹 - {chinese_name} {english_name}"
         else:
-            return title_base
-            
-
-    def extract_skills_from_text(self, text):
-        """Extract skill information from OCR text - improved version"""
-        if not text:
-            return []
-        
-        skills = []
-        lines = text.split('\n')
-        
-        # Look for skill patterns more flexibly
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if not line:
-                continue
-            
-            # Look for skill headers with various formats
-            skill_patterns = [
-                r'技能([1-4])[：:【]?([^】\n]*)',
-                r'技能\s*([1-4])[：:【]?([^】\n]*)',
-                r'Skill\s*([1-4])[：:]?([^\n]*)'
-            ]
-            
-            for pattern in skill_patterns:
-                skill_match = re.search(pattern, line)
-                if skill_match:
-                    skill_num = skill_match.group(1)
-                    skill_name = skill_match.group(2).strip('】').strip()
-                    
-                    # Collect description from following lines
-                    description_lines = [skill_name] if skill_name else []
-                    
-                    # Look at next few lines for description
-                    for j in range(i+1, min(i+4, len(lines))):
-                        next_line = lines[j].strip()
-                        if not next_line or re.search(r'技能[1-4]', next_line):
-                            break
-                        # Only add lines that look like descriptions (contain Chinese or meaningful text)
-                        if len(next_line) > 5 and (re.search(r'[\u4e00-\u9fff]', next_line) or 
-                                                  re.search(r'[攻擊傷害發動對象秒獲得增加]', next_line)):
-                            description_lines.append(next_line)
-                    
-                    if description_lines:
-                        skills.append({
-                            'number': skill_num,
-                            'name': skill_name,
-                            'description': ' '.join(description_lines)
-                        })
-                    break
-        
-        return skills
-
-    def generate_readme_content(self, folder_path, images, extracted_texts):
-        """Generate README content using the preferred template - improved to match manual quality"""
-        folder_name = folder_path.name
-        all_text = '\n'.join(extracted_texts)
-        
-        # Determine announcement details
-        announcement_type = self.determine_announcement_type(folder_name, all_text)
-        title = self.generate_title_from_folder(folder_name, announcement_type, all_text)
-        date = self.extract_date_from_folder(folder_name)
-        
-        # Generate README content following the exact template format
-        content = f"# {title}\n"
-        content += f"**Date:** {date}\n"
-        content += f"**Type:** {announcement_type}\n"
-        
-        # Add status or event info based on type
-        if announcement_type == "Balance Update":
-            content += f"**Status:** Active\n"
-        elif announcement_type == "New Character Release":
-            content += f"**Event:** Special Release\n"
-        
-        content += "\n## Announcement Images\n"
-        
-        # Add images with more descriptive names matching the template
-        for i, img in enumerate(images, 1):
-            img_name = img.name
-            if announcement_type == "New Character Release":
-                if i == 1:
-                    desc = "Main Announcement"
-                else:
-                    desc = f"Character Introduction {i}"
-            elif announcement_type == "Balance Update":
-                if i == 1:
-                    desc = "Main Announcement"
-                else:
-                    desc = f"Balance Update Image {i}"
-            else:
-                desc = f"Announcement Image {i}"
-            
-            content += f"![{desc}](images/{img_name})\n"
-        
-        content += "\n## Summary\n"
-        
-        # Generate better summary based on type and extracted skills
-        if announcement_type == "New Character Release":
-            skills = self.extract_skills_from_text(all_text)
-            if skills and len(skills) >= 3:  # Only show skills if we found multiple ones
-                content += f"- New character: {title.split(' - ')[1] if ' - ' in title else 'New Character'}\n"
-                content += f"- Event type: Special Character Release\n"
-                for skill in skills:
-                    if skill['description'] and len(skill['description']) > 10:
-                        content += f"- 技能{skill['number']}【{skill['name']}】：{skill['description']}\n"
-            else:
-                content += "New character release with unique abilities and skills.\n"
-                content += "\nFor detailed skill information, please refer to the announcement images above.\n"
-        
-        elif announcement_type == "Balance Update":
-            if 'warrior' in folder_name.lower() and 'class' in folder_name.lower():
-                content += "This update focuses on comprehensive warrior class adjustments and improvements.\n\n"
-                content += "**Key Changes:**\n"
-                content += "- Warrior skill rebalancing\n"
-                content += "- Combat mechanics adjustments\n"
-                content += "- Performance optimizations\n"
-            else:
-                skills = self.extract_skills_from_text(all_text)
-                if skills and len(skills) >= 2:
-                    content += "Character balance adjustments including:\n\n"
-                    for skill in skills:
-                        if skill['description'] and len(skill['description']) > 10:
-                            content += f"**技能{skill['number']} Changes:** {skill['description'][:100]}...\n\n"
-                else:
-                    content += "Balance update with character skill and parameter adjustments.\n"
-                    content += "\nThis update includes various gameplay balance improvements and bug fixes.\n"
-        
-        else:
-            content += "General game announcement with important updates and information.\n"
-            content += "\nPlease refer to the announcement images above for detailed information.\n"
-        
-        # Add notes section (simplified)
-        content += "\n## Notes\n"
-        content += "- Images automatically detected and processed\n"
-        content += "- For detailed information, please refer to the original announcement images above\n"
-        
-        content += "\n---\n"
-        content += f"*Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
-        
-        return content
-
-    def parse_date_from_line(self, line):
-        """Extract and parse date from a README line for sorting"""
-        # Extract date from line like "- **Aug 5, 2025** - [title]..."
-        date_match = re.search(r'\*\*([^*]+)\*\*', line)
-        if not date_match:
-            return datetime.min
-        
-        date_str = date_match.group(1).strip()
-        
-        # Try different date formats
-        date_formats = [
-            "%b %d, %Y",      # Aug 5, 2025
-            "%B %d, %Y",      # August 5, 2025
-            "%b %Y",          # Aug 2025
-            "%B %Y",          # August 2025
-            "%Y-%m-%d",       # 2025-08-05
-        ]
-        
-        for fmt in date_formats:
-            try:
-                return datetime.strptime(date_str, fmt)
-            except ValueError:
-                continue
-        
-        # If parsing fails, try to extract at least the year
-        year_match = re.search(r'(\d{4})', date_str)
-        if year_match:
-            try:
-                return datetime(int(year_match.group(1)), 1, 1)
-            except:
-                pass
-        
-        return datetime.min
-
-    def update_main_readme(self):
-        """Update the main announcements/README.md file with new entries"""
-        main_readme_path = Path("announcements/README.md")
-        
-        if not main_readme_path.exists():
-            print("Main README.md not found")
-            return
-        
-        # Read current README
-        with open(main_readme_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        if not self.new_entries:
-            return
-        
-        # Find the "Recent Announcements" section
-        recent_section_pattern = r'(### Recent Announcements\n)(.*?)(\n📋)'
-        match = re.search(recent_section_pattern, content, re.DOTALL)
-        
-        if not match:
-            print("Could not find Recent Announcements section")
-            return
-        
-        # Prepare new entries
-        new_lines = []
-        for entry in self.new_entries:
-            # Format date for display
-            try:
-                # Try to parse the date and format it as "Aug 13, 2025"
-                if entry['date'].count(',') > 0:  # Full date like "August 13, 2025"
-                    date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
-                    display_date = date_obj.strftime("%b %d, %Y")
-                else:  # Month/year only like "August 2025"
-                    date_obj = datetime.strptime(entry['date'], "%B %Y")
-                    display_date = date_obj.strftime("%b %Y")
-            except:
-                display_date = entry['date']
-            
-            # Create the entry line
-            line = f"- **{display_date}** - [{entry['title']}]({entry['folder']}/README.md) - {entry['type']}"
-            new_lines.append(line)
-        
-        # Get existing entries (if any)
-        existing_content = match.group(2).strip()
-        existing_lines = [line.strip() for line in existing_content.split('\n') if line.strip() and line.strip().startswith('- **')]
-        
-        # Combine new and existing entries, removing duplicates by folder name
-        all_lines = new_lines + existing_lines
-        seen_folders = set()
-        unique_lines = []
-        
-        for line in all_lines:
-            # Extract folder name from the line to check for duplicates
-            folder_match = re.search(r'\(([^/)]+)/README\.md\)', line)
-            if folder_match:
-                folder_name = folder_match.group(1)
-                if folder_name not in seen_folders:
-                    seen_folders.add(folder_name)
-                    unique_lines.append(line)
-            else:
-                # If we can't extract folder name, check for exact duplicates
-                if line not in unique_lines:
-                    unique_lines.append(line)
-        
-        # Sort all entries by date (newest first)
-        unique_lines.sort(key=self.parse_date_from_line, reverse=True)
-        
-        # Keep only the most recent 10 entries
-        unique_lines = unique_lines[:10]
-        
-        # Update the README content
-        new_recent_content = match.group(1) + '\n'.join(unique_lines) + match.group(3)
-        updated_content = content.replace(match.group(0), new_recent_content)
-        
-        # Update the "Last Updated" date
-        today = datetime.now().strftime("%B %d, %Y")
-        updated_content = re.sub(r'\*\*Last Updated:\*\* [^\n]+', f'**Last Updated:** {today}', updated_content)
-        
-        # Write back to file
-        with open(main_readme_path, 'w', encoding='utf-8') as f:
-            f.write(updated_content)
-        
-        print(f"Updated main README.md with {len(new_lines)} new entries")
+            return f"新武將介紹 - {english_name}"
 
     def process_folder(self, folder_path):
-        """Process a single announcement folder"""
-        print(f"Processing folder: {folder_path}")
-        
+        print(f"Processing folder: {folder_path.name}")
+       
         images_path = folder_path / "images"
         readme_path = folder_path / "README.md"
-        
-        # Skip if README already exists and is not auto-generated
-        if readme_path.exists():
-            with open(readme_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                if "*Auto-generated on" not in content:
-                    print(f"  Skipping - README exists and is not auto-generated")
-                    return False
-        
-        # Get all image files
-        image_files = sorted(list(images_path.glob("*.jpg")) + 
-                           list(images_path.glob("*.png")) + 
+       
+        # Find images
+        image_files = sorted(list(images_path.glob("*.jpg")) +
+                           list(images_path.glob("*.png")) +
                            list(images_path.glob("*.jpeg")))
-        
+       
         if not image_files:
-            print(f"  No images found in {images_path}")
             return False
-        
-        print(f"  Found {len(image_files)} images")
-        
-        # Check for manual text override
-        text_override_path = folder_path / "text.txt"
-        if text_override_path.exists():
-            print(f"  Using manual text override from text.txt")
-            with open(text_override_path, 'r', encoding='utf-8') as f:
-                extracted_texts = [f.read()]
-        else:
-            # Extract text from images (limit to first 5 for performance)
-            print(f"  Extracting text from images...")
-            extracted_texts = []
-            for img_path in image_files[:5]:  # Limit to first 5 images
-                text = self.extract_text_from_image(img_path)
-                if text.strip():
-                    extracted_texts.append(text)
-                    print(f"    Extracted text from {img_path.name}: {len(text)} chars")
-        
-        # Generate README content
-        readme_content = self.generate_readme_content(folder_path, image_files, extracted_texts)
-        
-        # Write README
+           
+        # Extract text (Focus on first image for Title/Name)
+        print(f"  Extracting text...")
+        extracted_texts = []
+        for img_path in image_files[:3]:
+            text = self.extract_text_from_image(img_path)
+            if text:
+                extracted_texts.append(text)
+
+        all_text = "\n".join(extracted_texts)
+       
+        # Generate Metadata
+        title = self.generate_title_from_folder(folder_path.name, all_text)
+       
+        # Generate README
+        content = f"# {title}\n\n"
+        content += f"**Folder:** {folder_path.name}\n"
+        content += "\n## Announcement Images\n"
+        for img in image_files:
+            content += f"![Image](images/{img.name})\n"
+           
+        if all_text:
+            content += "\n## OCR Extracted Text\n"
+            content += "```\n" + all_text[:1000] + "\n```\n" # Limit length
+           
         with open(readme_path, 'w', encoding='utf-8') as f:
-            f.write(readme_content)
-        
-        print(f"  Generated README.md")
-        
-        # Add to new entries for main README update
-        all_text = ' '.join(extracted_texts)
+            f.write(content)
+           
+        print(f"  Generated README for {title}")
+       
+        # Save for main README update
         self.new_entries.append({
-            'folder': folder_path.name,
-            'title': self.generate_title_from_folder(
-                folder_path.name, 
-                self.determine_announcement_type(folder_path.name, all_text),
-                all_text
-            ),
-            'date': self.extract_date_from_folder(folder_path.name),
-            'type': self.determine_announcement_type(folder_path.name, all_text)
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'title': title,
+            'folder': folder_path.name
         })
-        
+       
         return True
 
-
-    def update_main_root_readme(self):
-        """Update the main root README.md file with new announcements"""
-        main_readme_path = Path("README.md")
-        
-        if not main_readme_path.exists():
-            print("Main root README.md not found")
-            return
-        
-        if not self.new_entries:
-            return
-        
-        # Read current README
-        with open(main_readme_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Find the "Recent Announcements" section
-        recent_section_pattern = r'(### Recent Announcements\n)(.*?)(\n📋)'
-        match = re.search(recent_section_pattern, content, re.DOTALL)
-        
-        if not match:
-            print("Could not find Recent Announcements section in main README")
-            return
-        
-        # Prepare new entries for main README
+    def update_main_readme(self):
+        """Simple append to main README"""
+        if not self.new_entries: return
+       
+        readme_path = Path("README.md")
+        if not readme_path.exists(): return
+       
+        print(f"Updating main README with {len(self.new_entries)} entries...")
+       
+        # Construct new lines
         new_lines = []
         for entry in self.new_entries:
-            # Format date for display
-            try:
-                if entry['date'].count(',') > 0:  # Full date like "August 13, 2025"
-                    date_obj = datetime.strptime(entry['date'], "%B %d, %Y")
-                    display_date = date_obj.strftime("%b %d, %Y")
-                else:  # Month/year only like "August 2025"
-                    date_obj = datetime.strptime(entry['date'], "%B %Y")
-                    display_date = date_obj.strftime("%b %Y")
-            except:
-                display_date = entry['date']
-            
-            # Create entry line for main README (with announcements/ prefix)
-            line = f"- **{display_date}** - [{entry['title']}](announcements/{entry['folder']}/README.md) - {entry['type']}"
+            line = f"- **{entry['date']}** - [{entry['title']}](announcements/{entry['folder']}/README.md)"
             new_lines.append(line)
-        
-        # Get existing entries
-        existing_content = match.group(2).strip()
-        existing_lines = [line.strip() for line in existing_content.split('\n') if line.strip() and line.strip().startswith('- **')]
-        
-        # Combine new and existing entries, removing duplicates
-        all_lines = new_lines + existing_lines
-        seen_folders = set()
-        unique_lines = []
-        
-        for line in all_lines:
-            # Extract folder name from the line to check for duplicates
-            folder_match = re.search(r'announcements/([^/)]+)/README\.md', line)
-            if folder_match:
-                folder_name = folder_match.group(1)
-                if folder_name not in seen_folders:
-                    seen_folders.add(folder_name)
-                    unique_lines.append(line)
-            else:
-                # Check for exact duplicates if folder extraction fails
-                if line not in unique_lines:
-                    unique_lines.append(line)
-        
-        # Sort entries by date (newest first)
-        unique_lines.sort(key=self.parse_date_from_line, reverse=True)
-        
-        # Keep only the most recent 5 entries for main README (less cluttered)
-        unique_lines = unique_lines[:5]
-        
-        # Update the README content
-        new_recent_content = match.group(1) + '\n'.join(unique_lines) + match.group(3)
-        updated_content = content.replace(match.group(0), new_recent_content)
-        
-        # Update the "Last Updated" date at bottom
-        today = datetime.now().strftime("%B %d, %Y")
-        updated_content = re.sub(
-            r'\*\*Last Updated:\*\* [^\n]+', 
-            f'**Last Updated:** {today}', 
-            updated_content
-        )
-        
-        # Write back to file
-        with open(main_readme_path, 'w', encoding='utf-8') as f:
-            f.write(updated_content)
-        
-        print(f"Updated main root README.md with {len(new_lines)} new announcement entries")
-    
+           
+        # Read and Update (Simple insertion after header)
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+           
+        # Insert after "Recent Announcements" if it exists
+        if "### Recent Announcements" in content:
+            parts = content.split("### Recent Announcements")
+            # Keep header, insert new lines, keep rest
+            updated_content = parts[0] + "### Recent Announcements\n" + "\n".join(new_lines) + "\n" + parts[1]
+           
+            with open(readme_path, 'w', encoding='utf-8') as f:
+                f.write(updated_content)
+
     def run(self):
-        """Main processing function"""
-        print("🔍 Kingdom Story Photo Scanner - Enhanced Version")
-        print("=" * 50)
-        
+        print("Starting Photo Scanner...")
         folders = self.find_announcement_folders()
-        if not folders:
-            print("No announcement folders found")
-            return
-        
-        print(f"Found {len(folders)} announcement folders")
-        
-        processed_count = 0
         for folder in folders:
-            if self.process_folder(folder):
-                processed_count += 1
-        
-        if processed_count > 0:
-            # Update main README instead of creating new-entries.md
-            self.update_main_readme()
-
-            # Update main root README
-            self.update_main_root_readme()
-
-            # Create summary files for GitHub Action
-            # self.create_summary_files()
-            
-            print(f"\n✅ Successfully processed {processed_count} folders")
-            print("📝 Updated announcements/README.md")
-            print("📝 Updated main root README.md")  # <-- ADD THIS LINE
-            # print("📄 Created summary files for PR")
-        else:
-            print("\n ℹ️ No new content to process")
+            self.process_folder(folder)
+        self.update_main_readme()
+        print("Done.")
 
 if __name__ == "__main__":
     scanner = KingdomStoryPhotoScanner()
