@@ -1,5 +1,5 @@
-# Emperor Rarity Dong Zhuo
-**Date:** November 17, 2025
+# Emperor Rarity Jiang Wei
+**Date:** December 15, 2025
 **Type:** Unknown - Requires Manual Review
 
 ## Announcement Images
@@ -17,9 +17,6 @@
 ![Announcement Image 12](images/12.jpg)
 ![Announcement Image 13](images/13.jpg)
 ![Announcement Image 14](images/14.jpg)
-![Announcement Image 15](images/15.jpg)
-![Announcement Image 16](images/16.jpg)
-![Announcement Image 17](images/17.jpg)
 
 ## Summary
 General game announcement with important updates and information.
@@ -31,4 +28,4 @@ Please refer to the announcement images above for detailed information.
 - For detailed information, please refer to the original announcement images above
 
 ---
-*Auto-generated on 2025-12-23 00:29:04*
+*Auto-generated on 2025-12-23 00:29:10*
