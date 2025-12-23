@@ -500,7 +500,7 @@ class KingdomStoryPhotoScanner:
        
         print(f"  ✅ Generated README: {readme_path}")
 
-        folder_date = self.extrat_date_from_folder(folder_path.name)
+        folder_date = self.extract_date_from_folder(folder_path.name)
         # Save for main README update
         self.new_entries.append({
             'date': folder_date,
