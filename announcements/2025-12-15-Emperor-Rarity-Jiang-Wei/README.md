@@ -1,5 +1,5 @@
-# 新武將介紹 - Emperor Rarity Dong Zhuo (New Character Release)
-**Date:** November 17, 2025
+# 新武將介紹 - Emperor Rarity Jiang Wei (New Character Release)
+**Date:** December 15, 2025
 **Type:** New Character Release
 **Event:** Special Release
 
@@ -18,9 +18,6 @@
 ![Character Introduction 12](images/12.jpg)
 ![Character Introduction 13](images/13.jpg)
 ![Character Introduction 14](images/14.jpg)
-![Character Introduction 15](images/15.jpg)
-![Character Introduction 16](images/16.jpg)
-![Character Introduction 17](images/17.jpg)
 
 ## Summary
 New character release with unique abilities and skills.
@@ -32,4 +29,4 @@ For detailed skill information, please refer to the announcement images above.
 - For detailed information, please refer to the original announcement images above
 
 ---
-*Auto-generated on 2025-12-23 01:08:09*
+*Auto-generated on 2025-12-23 01:08:17*
