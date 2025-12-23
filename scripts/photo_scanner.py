@@ -21,7 +21,7 @@ class KingdomStoryPhotoScanner:
         self.processed_folders = set()
         
         # OCR configuration for better Chinese text recognition
-        self.ocr_config = r'--oem 3 --psm 6 -l chi_tra+eng'
+        self.ocr_config = r'--oem 3 --psm 6 -l chi_tra'
         
         # Common OCR error patterns and corrections
         self.text_corrections = {
