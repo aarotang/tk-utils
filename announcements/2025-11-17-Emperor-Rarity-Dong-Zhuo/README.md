@@ -1,6 +1,6 @@
 # Emperor Rarity Dong Zhuo
 **Date:** November 17, 2025
-**Type:** Unknown - Requires Manual Review
+**Type:** Event Announcement
 
 ## Announcement Images
 ![Announcement Image 1](images/01.jpg)
@@ -31,4 +31,4 @@ Please refer to the announcement images above for detailed information.
 - For detailed information, please refer to the original announcement images above
 
 ---
-*Auto-generated on 2025-11-23 22:28:38*
+*Auto-generated on 2025-12-23 17:05:59*
