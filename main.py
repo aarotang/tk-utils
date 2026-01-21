@@ -50,7 +50,7 @@ class KingdomStoryCouponRedemption:
             },
             'KOR8': {
                 'server_name': 'Blue Sky (KOR)',
-                'ids': ["初始886", "ffecg", "我過去總是祖", "吳若權限期",
+                'ids': ["kpop1", "初始886", "ffecg", "我過去總是祖", "吳若權限期",
                         "鱷魚邪惡", "甲魚躍升為", "午餐戶外課", "daG8", "魔動王地獄使者"]
             },
             'KOR': {
