@@ -19,6 +19,13 @@ A collection of automation tools and utilities for Kingdom Story game, including
 ## 🎮 Latest Kingdom Story Updates
 
 ### Recent Announcements
+
+- **2025-12-23** - [新武將介紹 - 上人 (2025 06 Warrior Class Rework)](announcements/2025-06-warrior-class-rework/README.md)
+- **2025-12-23** - [新武將介紹 - 一心 (2025 08 Cheok Jun Gyeong)](announcements/2025-08-cheok-jun-gyeong/README.md)
+- **2025-12-23** - [新武將介紹 - 中六 (Sun Shang Xiang)](announcements/2025-09-22-sun-shang-xiang/README.md)
+- **2025-12-23** - [新武將介紹 - 安襄受這 (Dong Zhuo)](announcements/2025-11-17-Emperor-Rarity-Dong-Zhuo/README.md)
+- **2025-12-23** - [新武將介紹 - 計人 (Jiang Wei)](announcements/2025-12-15-Emperor-Rarity-Jiang-Wei/README.md)
+
 - **Nov 17, 2025** - [新武將介紹 - 董卓 Dong Zhuo](announcements/2025-11-17-Emperor-Rarity-Dong-Zhuo/README.md) - Unknown - Requires Manual Review
 - **Sep 22, 2025** - [新武將介紹 - 孫尚香 Sun Shang Xiang (New Character Release)](announcements/2025-09-22-sun-shang-xiang/README.md) - New Character Release
 - **Aug 5, 2025** - [新武將介紹 - 拓跋京 (New Character - Cheok Jun-gyeong)](announcements/2025-08-cheok-jun-gyeong/) - Darkness Warrior character release
