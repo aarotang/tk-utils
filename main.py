@@ -39,7 +39,8 @@ class KingdomStoryCouponRedemption:
         # Your server configurations here...
         self.SERVERS = {
             'US': {
-                'server_name': 'Conquest (US)',
+                # 'server_name': 'Conquest (US)',
+                'server_name': 'Imperial Conquest',
                 'ids': [
                     "一蓑煙雨任平生", "龍之旗", "時光一如继往"
                 ]
