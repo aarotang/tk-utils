@@ -42,7 +42,7 @@ class KingdomStoryCouponRedemption:
                 # 'server_name': 'Conquest (US)',
                 'server_name': 'Imperial Conquest',
                 'ids': [
-                    "一蓑煙雨任平生", "龍之旗", "時光一如继往"
+                    "一蓑煙雨任平生", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", "shushu1", "丨MoonLight丨"
                 ]
             },
             'TW': {
