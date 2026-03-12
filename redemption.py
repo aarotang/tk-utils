@@ -42,13 +42,14 @@ class KingdomStoryCouponRedemption:
         # Servers configuration
         self.SERVERS = {
             'US': {
-                'server_name': 'Conquest (US)',
-                'ids': ["一蓑煙雨任平生", "龍之旗", "時光一如继往"]
+                # 'server_name': 'Conquest (US)',
+                'server_name': 'Imperial Conquest',
+                'ids': ["一蓑煙雨任平生", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", "shushu1", "| MoonLight |"]
             },
-            'TW': {
-                'server_name': 'Inferno (TW)',
-                'ids': ["weibaibai", "魔动王风暴使者"]
-            },
+            # 'TW': {
+            #     'server_name': 'Inferno (TW)',
+            #     'ids': ["weibaibai", "魔动王风暴使者"]
+            # },
             'KOR8': {
                 'server_name': 'Blue Sky (KOR)',
                 'ids': ["初始886", "ffecg", "我過去總是祖", "吳若權限期",
@@ -58,10 +59,10 @@ class KingdomStoryCouponRedemption:
                 'server_name': 'Orchard (KOR)',
                 'ids': ["kpop1", "| MoonLight |"]
             },
-            'SEA': {
-                'server_name': 'Warlord (SEA)',
-                'ids': ["shushu1", "| MoonLight |"]
-            },
+            # 'SEA': {
+            #     'server_name': 'Warlord (SEA)',
+            #     'ids': ["shushu1", "| MoonLight |"]
+            # },
             'JP': {
                 'server_name': 'Invincible (JP)',
                 'ids': ["IkkiTousen", "陳羅森", "ZII5566", "有夢想的咸魚", "李麥特", "天意", "| MoonLight |"]
