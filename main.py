@@ -56,8 +56,8 @@ class KingdomStoryCouponRedemption:
                         "甲魚躍升為", "午餐戶外課", "daG8", "魔動王地獄使者", "西斯其次下次"]
             },
             'KOR': {
-                'server_name': 'Orchard (KOR)',
-                'ids': ["kpop1", "丨MoonLight丨"]
+                'server_name': 'Heroic Figures(KOR)',
+                'ids': ["kpop1", "丨MoonLight丨#7"]
             },
             # 'SEA': {
             #     'server_name': 'Warlord (SEA)',
@@ -69,7 +69,13 @@ class KingdomStoryCouponRedemption:
                     "IkkiTousen", "陳羅森", "ZII5566", 
                     "有夢想的咸魚", "李麥特", "天意", "丨MoonLight丨"
                 ]
-            }
+            },
+            '11': {
+                'server_name': 'Chu Shi Biao',
+                'ids': [
+                    "實驗室", "arkai"
+                ]
+            },
         }
     
     def _redeem_coupon(self, server_data, monarch_id):
