@@ -44,7 +44,7 @@ class KingdomStoryCouponRedemption:
             'US': {
                 # 'server_name': 'Conquest (US)',
                 'server_name': 'Imperial Conquest',
-                'ids': ["一蓑煙雨任平生", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", "shushu1", "| MoonLight |"]
+                'ids': ["魔动王波涛使者", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", "shushu1", "| MoonLight |"]
             },
             # 'TW': {
             #     'server_name': 'Inferno (TW)',
@@ -52,8 +52,8 @@ class KingdomStoryCouponRedemption:
             # },
             'KOR8': {
                 'server_name': 'Blue Sky (KOR)',
-                'ids': ["初始886", "ffecg", "我過去總是祖", "吳若權限期",
-                        "鱷魚邪惡", "甲魚躍升為", "午餐戶外課", "daG8", "魔動王地獄使者"]
+                'ids': ["ffecg", "nssnsn", "鱷魚邪惡", "初始886", "我過去總是祖", "吳若權限期",
+                        "甲魚躍升為", "午餐戶外課", "daG8", "魔動王地獄使者", "西斯其次下次"]
             },
             'KOR': {
                 'server_name': 'Orchard (KOR)',
