@@ -42,13 +42,14 @@ class KingdomStoryCouponRedemption:
                 # 'server_name': 'Conquest (US)',
                 'server_name': 'Imperial Conquest',
                 'ids': [
-                    "魔动王波涛使者", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", "shushu1", "| MoonLight |, 丨MoonLight丨"
+                    "魔动王波涛使者", "龍之旗", "時光一如继往", "weibaibai", "魔动王风暴使者", 
+                    "shushu1", "| MoonLight |", "丨MoonLight丨"
                 ]
             },
-            'TW': {
-                'server_name': 'Inferno (TW)',
-                'ids': ["weibaibai", "魔动王风暴使者"]
-            },
+            # 'TW': {
+            #     'server_name': 'Inferno (TW)',
+            #     'ids': ["weibaibai", "魔动王风暴使者"]
+            # },
             'KOR8': {
                 'server_name': 'Blue Sky (KOR)',
                 'ids': ["ffecg", "nssnsn", "鱷魚邪惡", "初始886", "我過去總是祖", "吳若權限期",
@@ -58,10 +59,10 @@ class KingdomStoryCouponRedemption:
                 'server_name': 'Orchard (KOR)',
                 'ids': ["kpop1", "丨MoonLight丨"]
             },
-            'SEA': {
-                'server_name': 'Warlord (SEA)',
-                'ids': ["shushu1", "丨MoonLight丨"]
-            },
+            # 'SEA': {
+            #     'server_name': 'Warlord (SEA)',
+            #     'ids': ["shushu1", "丨MoonLight丨"]
+            # },
             'JP': {
                 'server_name': 'Invincible (JP)',
                 'ids': [
