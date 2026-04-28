@@ -57,7 +57,7 @@ class KingdomStoryCouponRedemption:
             },
             'KOR': {
                 'server_name': 'Heroic Figures(KOR)',
-                'ids': ["kpop1", "丨MoonLight丨#7"]
+                'ids': ["kpop1", "丨MoonLight丨#7", "丨MoonLight丨#1"]
             },
             # 'SEA': {
             #     'server_name': 'Warlord (SEA)',
